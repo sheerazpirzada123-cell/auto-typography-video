@@ -4,7 +4,7 @@ from moviepy.editor import TextClip, CompositeVideoClip, AudioFileClip, ColorCli
 
 def create_video():
     if not os.path.exists("voice.mp3"):
-        print("Error: voice.mp3 not found!")
+        print("Error: voice.mp3 missing!")
         return
 
     audio = AudioFileClip("voice.mp3")
@@ -14,7 +14,6 @@ def create_video():
     model = whisper.load_model("tiny")
     result = model.transcribe("voice.mp3", word_timestamps=True)
     
-    # 9:16 Vertical canvas for reels/shorts
     bg = ColorClip(size=(1080, 1920), color=(245, 245, 245), duration=duration)
     clips = [bg]
     
@@ -32,7 +31,7 @@ def create_video():
             
     final_video = CompositeVideoClip(clips).set_audio(audio)
     final_video.write_videofile("final_output.mp4", fps=24, codec="libx264", audio_codec="aac")
-    print("Video output saved successfully as final_output.mp4")
+    print("Video saved successfully!")
 
 if __name__ == "__main__":
     create_video()
