@@ -1,29 +1,50 @@
 import os
+import random
 import requests
 import google.generativeai as genai
 
-# Setup Gemini API Key
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_script():
     try:
-        # gemini-1.5-flash standard model name hai
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        categories = ["Technology", "Space & Science", "Human Psychology", "World History", "Bizarre Facts", "Life Hacks"]
+        selected_category = random.choice(categories)
+        
+        # Fixed model name for current API version
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        
         prompt = (
-            "Give me 1 trending interesting short fact in Hinglish for a short reel. "
-            "STRICT LIMIT: Maximum 200 characters long. Punchy script."
+            f"Give me 1 extremely shocking, rare, and interesting short fact about {selected_category} in simple Hinglish for a viral short reel. "
+            "STRICT LIMIT: Maximum 200 characters long. Punchy typography style script."
         )
-        response = model.generate_content(prompt)
+        
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.9,
+                top_p=0.95
+            )
+        )
+        
         text = response.text.strip()
-        print(f"Generated Text: {text}")
+        print(f"Category: {selected_category}")
+        print(f"Generated Script: {text}")
         return text[:250]
+        
     except Exception as e:
-        print(f"Gemini API Error: {e}")
-        # Fallback text in case API fails
-        return "Did you know that Honey never spoils? Archeologists found 3000 year old edible honey!"
+        print(f"Gemini API Exception (using fallback): {e}")
+        fallbacks = [
+            "Did you know? Honey never spoils! Archeologists found 3000 year old edible honey.",
+            "Bananas are naturally radioactive because of potassium! Crazy right?",
+            "Octopuses have three hearts and blue blood! Mind blown!"
+        ]
+        return random.choice(fallbacks)
 
 def generate_audio(text):
-    api_key = os.environ["ELEVENLABS_API_KEY"]
+    api_key = os.environ.get("ELEVENLABS_API_KEY")
+    if not api_key:
+        raise ValueError("ELEVENLABS_API_KEY secret is missing!")
+
     voice_id = "21m00Tcm4TlvDq8ikWAM"
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     
@@ -35,16 +56,16 @@ def generate_audio(text):
     data = {
         "text": text,
         "model_id": "eleven_monolingual_v1",
-        "voice_settings": {"stability": 0.5, "similarity_boost": 0.5}
+        "voice_settings": {"stability": 0.4, "similarity_boost": 0.7}
     }
     
     res = requests.post(url, json=data, headers=headers)
     if res.status_code == 200:
         with open("voice.mp3", "wb") as f:
             f.write(res.content)
-        print("Audio saved successfully.")
+        print("voice.mp3 successfully generated!")
     else:
-        print(f"ElevenLabs API Error: {res.status_code} - {res.text}")
+        raise Exception(f"ElevenLabs API Error: {res.status_code} - {res.text}")
 
 if __name__ == "__main__":
     text = get_script()
