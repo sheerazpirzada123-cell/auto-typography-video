@@ -31,6 +31,7 @@ jobs:
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+        ELEVENLABS_API_KEY_2: ${{ secrets.ELEVENLABS_API_KEY_2 }}
       run: python script_generator.py
 
     - name: Render Video
@@ -41,4 +42,3 @@ jobs:
       with:
         name: daily-video
         path: final_output.mp4
-        
