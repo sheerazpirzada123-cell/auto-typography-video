@@ -24,27 +24,30 @@ def fetch_bg_music():
         with open("bg_music.mp3", "wb") as f:
             f.write(r.content)
 
-def fetch_relevant_png(keyword, idx):
+def fetch_relevant_png(idx, category):
     filename = f"asset_{idx}.png"
     if os.path.exists(filename):
         return filename
 
     try:
-        print(f"Fetching online image for topic keyword: {keyword}")
-        search_url = f"https://pixabay.com/api/?key=38128328-912f2c8d28a3068e285a889b7&q={keyword}&image_type=illustration&safesearch=true"
-        response = requests.get(search_url, timeout=5).json()
-
-        if response.get("hits"):
-            img_url = response["hits"][0]["webformatURL"]
-            img_data = requests.get(img_url, timeout=5).content
+        search_tag = "marvel,superhero" if category == "MARVEL" else "anime,goku"
+        print(f"Fetching HD Image for Category: {category}")
+        img_url = f"https://source.unsplash.com/featured/500x500/?{search_tag}"
+        r = requests.get(img_url, timeout=8)
+        if r.status_code == 200 and len(r.content) > 5000:
             with open(filename, "wb") as f:
-                f.write(img_data)
+                f.write(r.content)
             return filename
     except Exception as e:
-        print(f"Image Download Warning: {e}")
+        print(f"Unsplash Fetch Warning: {e}")
 
-    fallback_url = "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f431.png"
-    r = requests.get(fallback_url)
+    # Clean HD Fallback Images
+    fallback_urls = {
+        "MARVEL": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=500&q=80",
+        "ANIME": "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&q=80"
+    }
+    url = fallback_urls.get(category, fallback_urls["MARVEL"])
+    r = requests.get(url)
     with open(filename, "wb") as f:
         f.write(r.content)
     return filename
@@ -55,6 +58,11 @@ def create_video():
 
     fetch_bg_music()
     create_pop_sound("pop.wav")
+
+    category = "MARVEL"
+    if os.path.exists("category.txt"):
+        with open("category.txt", "r", encoding="utf-8") as f:
+            category = f.read().strip()
 
     voice_audio = AudioFileClip("voice.mp3")
     duration = voice_audio.duration
@@ -76,79 +84,56 @@ def create_video():
     bg = ColorClip(size=(1080, 1920), color=random.choice(bg_colors), duration=duration)
     video_clips = [bg]
 
-    print("Transcribing voice audio using Whisper...")
-    script_words = []
-    if os.path.exists("script.txt"):
-        with open("script.txt", "r", encoding="utf-8") as f:
-            script_words = f.read().strip().split()
+    # Add Topic-Matched HD Image
+    asset_file = fetch_relevant_png(0, category)
+    if os.path.exists(asset_file):
+        img_clip = (
+            ImageClip(asset_file)
+            .set_start(3.0)
+            .set_duration(min(6.0, duration - 3.0))
+            .resize(width=380)
+            .set_position(('center', 380))
+        )
+        video_clips.append(img_clip)
 
+    print("Transcribing audio with Whisper...")
     model = WhisperModel("tiny", device="cpu", compute_type="int8")
-    segments, _ = model.transcribe(
-        "voice.mp3", 
-        word_timestamps=True,
-        initial_prompt=" ".join(script_words[:30]) if script_words else "Kya aapko pata hai"
-    )
-
-    context_keywords = ["anime", "marvel", "goku", "ironman", "cat", "hero"]
-    for i in range(2):
-        target_time = random.uniform(3.0, max(4.0, duration - 6.0))
-        kw = random.choice(context_keywords)
-        asset_file = fetch_relevant_png(kw, i)
-        
-        if os.path.exists(asset_file):
-            img_clip = (
-                ImageClip(asset_file)
-                .set_start(target_time)
-                .set_duration(3.5)
-                .resize(width=320)
-                .set_position((random.choice([100, 650]), random.choice([350, 1250])))
-            )
-            video_clips.append(img_clip)
+    segments, _ = model.transcribe("voice.mp3", word_timestamps=True)
 
     pop_audio = AudioFileClip("pop.wav").volumex(0.15)
     color_palette = ['#C0392B', '#1F618D', '#117A65', '#D35400', '#2E4053', '#8E44AD']
-    available_fonts = ['DejaVu-Sans-Bold', 'DejaVu-Sans-ExtraLight', 'DejaVu-Sans']
-    font_sizes = [85, 105, 125]
+    font_sizes = [90, 110, 125]
 
-    word_idx = 0
+    word_count = 0
     for segment in segments:
         for word_item in segment.words:
             start = word_item.start
             end = word_item.end
+            txt = word_item.word.strip().upper()
 
-            if script_words and word_idx < len(script_words):
-                txt = script_words[word_idx].upper()
-                word_idx += 1
-            else:
-                txt = word_item.word.strip().upper()
-
-            if end > start:
-                chosen_color = random.choice(color_palette)
-                chosen_size = random.choice(font_sizes)
-                chosen_font = random.choice(available_fonts)
-                pos_y = random.choice(['center', 720, 960, 1180])
-
+            if end > start and txt:
+                word_count += 1
                 txt_clip = (
                     TextClip(
                         txt,
-                        fontsize=chosen_size,
-                        color=chosen_color,
-                        font=chosen_font,
+                        fontsize=random.choice(font_sizes),
+                        color=random.choice(color_palette),
+                        font='DejaVu-Sans-Bold',
                         method='caption',
                         size=(950, None)
                     )
-                    .set_position(('center', pos_y))
+                    .set_position(('center', 1050))
                     .set_start(start)
                     .set_end(end)
                 )
                 video_clips.append(txt_clip)
 
-                if word_idx % 2 == 0 and (start + pop_audio.duration <= duration):
+                if word_count % 2 == 0 and (start + pop_audio.duration <= duration):
                     audio_stack.append(pop_audio.set_start(start))
 
     full_audio = CompositeAudioClip(audio_stack)
 
-    print("Rendering final dynamic video...")
+    print("Rendering final synced video...")
     final_video = CompositeVideoClip(video_clips).set_audio(full_audio)
     final_video.write_videofile(
         "final_output.mp4",
