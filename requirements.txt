@@ -1,5 +1,5 @@
 google-generativeai
-gTTS
+requests
 faster-whisper
 moviepy==1.0.3
 pillow
