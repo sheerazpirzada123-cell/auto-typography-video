@@ -3,7 +3,6 @@ import random
 import requests
 import numpy as np
 from scipy.io import wavfile
-from faster_whisper import WhisperModel
 from moviepy.editor import TextClip, CompositeVideoClip, AudioFileClip, ColorClip, CompositeAudioClip
 from moviepy.audio.fx.all import audio_loop
 
@@ -19,7 +18,7 @@ def create_pop_sound(filename="pop.wav"):
 
 def ensure_bg_music():
     if not os.path.exists("bg_music.mp3"):
-        print("bg_music.mp3 not found in repo. Downloading default music...")
+        print("bg_music.mp3 not found. Downloading default music...")
         url = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"
         r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
         with open("bg_music.mp3", "wb") as f:
@@ -35,6 +34,7 @@ def create_video():
     voice_audio = AudioFileClip("voice.mp3")
     duration = voice_audio.duration
 
+    # Background music continuous loop
     raw_bg = AudioFileClip("bg_music.mp3")
     bg_music = audio_loop(raw_bg, duration=duration).volumex(0.10)
 
@@ -44,31 +44,31 @@ def create_video():
     bg = ColorClip(size=(1080, 1920), color=random.choice(bg_colors), duration=duration)
     video_clips = [bg]
 
-    print("Extracting exact word timestamps with Whisper...")
-    model = WhisperModel("base", device="cpu", compute_type="int8")
-    segments, _ = model.transcribe(
-        "voice.mp3",
-        word_timestamps=True,
-        language="hi",
-        task="transcribe"
-    )
+    # Read clean script words from script.txt
+    if os.path.exists("script.txt"):
+        with open("script.txt", "r", encoding="utf-8") as f:
+            raw_text = f.read().strip()
+            # Clean non-ASCII characters if any
+            clean_text = ''.join([c for c in raw_text if ord(c) < 128])
+            words = [w.strip().upper() for w in clean_text.split() if w.strip()]
+    else:
+        words = ["MARVEL", "COMICS", "FACTS"]
 
-    pop_audio = AudioFileClip("pop.wav").volumex(0.20)
-    color_palette = ['#C0392B', '#1F618D', '#117A65', '#D35400', '#2E4053', '#8E44AD']
-    font_sizes = [110, 125, 140]
+    total_words = len(words)
+    if total_words > 0:
+        time_per_word = duration / total_words
+        pop_audio = AudioFileClip("pop.wav").volumex(0.20)
+        color_palette = ['#C0392B', '#1F618D', '#117A65', '#D35400', '#2E4053', '#8E44AD']
+        font_sizes = [110, 125, 140]
 
-    word_count = 0
-    for segment in segments:
-        for word_info in segment.words:
-            word_text = word_info.word.strip().strip(".,!?").upper()
-            start = max(0, word_info.start)
-            end = min(duration, word_info.end)
+        for i, word in enumerate(words):
+            start = i * time_per_word
+            end = min(duration, (i + 1) * time_per_word)
 
-            if word_text and (end > start):
-                word_count += 1
+            if end > start:
                 txt_clip = (
                     TextClip(
-                        word_text,
+                        word,
                         fontsize=random.choice(font_sizes),
                         color=random.choice(color_palette),
                         font='DejaVu-Sans-Bold',
