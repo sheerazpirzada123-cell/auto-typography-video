@@ -7,29 +7,21 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_script():
     try:
-        categories = ["MARVEL", "ANIME", "DC_COMICS", "SCI_FI_FACTS", "POP_CULTURE"]
+        categories = ["MARVEL", "ANIME", "DC_COMICS", "POP_CULTURE", "SCI_FI_FACTS"]
         chosen_category = random.choice(categories)
-        
-        angles = [
-            "crazy dark secret theory",
-            "hidden power that nobody noticed",
-            "mind blowing fact that was deleted",
-            "most overpowered moment explained",
-            "shocking backstory detail"
-        ]
-        chosen_angle = random.choice(angles)
 
         model = genai.GenerativeModel('gemini-1.5-flash')
         
+        # Human-like speech prompt
         prompt = (
-            f"Generate a completely new, unique, viral short reel script about a {chosen_angle} in {chosen_category}. "
-            "Write strictly in Roman Hinglish using ONLY standard A-Z English alphabets. "
-            "STRICT RULES:\n"
-            "1. Length: Exactly 30 to 40 words (around 18-20 seconds spoken).\n"
-            "2. Do NOT use Urdu, Hindi, or Arabic characters.\n"
-            "3. Do NOT repeat previous facts about Iron Man Celestial armor or Thor.\n"
-            "4. Start with a catchy hook line.\n"
-            "5. End with a strong call to action like 'Follow for more!' or 'Abhi subscribe karo!'"
+            f"Write an extremely natural, highly energetic short video script about a mind-blowing secret or fact in {chosen_category}.\n\n"
+            "CRITICAL STYLE RULES:\n"
+            "1. LANGUAGE: Strict Roman Hinglish (English A-Z alphabets ONLY).\n"
+            "2. HUMAN ACCENT & FLOW: Write EXACTLY how a regular Indian guy/influencer speaks out loud to a friend. Use natural conversational words like 'arrey', 'bhai', 'yaar', 'sach mein', 'matlab'.\n"
+            "3. NO ROBOTIC WORDS: Avoid formal bookish Hindi translated into English. Make it sound like casual daily conversation.\n"
+            "4. LENGTH: 30 to 40 words total (around 18 seconds spoken).\n"
+            "5. NO SPECIAL SYMBOLS: Strictly no Urdu, Devanagari, or Arabic letters. Plain A-Z only.\n"
+            "6. STRUCTURE: Dynamic hook in the beginning, crazy fact in the middle, fast call-to-action at the end."
         )
         
         response = model.generate_content(
@@ -40,20 +32,19 @@ def get_script():
             )
         )
         text = response.text.strip()
-        print(f"New Random Script Generated ({chosen_category}):\n{text}")
+        print(f"Generated Script ({chosen_category}):\n{text}")
         return text
         
     except Exception as e:
         print(f"Gemini API Error: {e}")
         fallback_scripts = [
-            "Kya aapko pata hai ki Thor ka hammer Mjolnir kitna heavy hai? Isse sirf wahi utha sakta hai jo truly worthy ho! Aise aur facts ke liye follow kar lo!",
-            "Goku ki strength ka real secret kya hai? DBZ mein uski infinite transformation energy sabko shock kar deti hai! Channel ko abhi follow karo!",
-            "Batman ke paas Superman ko harane ka secret plan hamesha ready hota hai! DC comics ka yeh secret sabhi ko nahi pata! Aise facts ke liye follow kar lo!"
+            "Arrey bhai kya aapko pata hai ki Thor ka hammer Mjolnir kitna heavy hai? Matlab isko sirf wahi utha sakta hai jo truly worthy ho! Aise insane facts ke liye abhi follow karo!",
+            "Goku ki strength ka real secret pata hai? DBZ mein uski infinite transformation energy dekh kar sab shock ho gaye the! Channel ko abhi follow karo!",
+            "Arrey yaar Batman ke paas Superman ko harane ka secret plan hamesha ready rehta hai! DC ka yeh fact sach mein mind blowing hai! Abhi follow kar lo!"
         ]
         return random.choice(fallback_scripts)
 
 def generate_audio(text):
-    # 4 API Keys Fallback Support Added Here
     api_keys = [
         os.environ.get("ELEVENLABS_API_KEY"),
         os.environ.get("ELEVENLABS_API_KEY_2"),
@@ -65,6 +56,7 @@ def generate_audio(text):
     if not api_keys:
         raise ValueError("No ElevenLabs API keys found in secrets!")
 
+    # Bunty Voice Profile ID
     voice_id = "nPczCjzI2devNBz1zbdH" 
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
@@ -80,9 +72,9 @@ def generate_audio(text):
             "text": text,
             "model_id": "eleven_multilingual_v2",
             "voice_settings": {
-                "stability": 0.15,
+                "stability": 0.25,        # Adjusted for human-like voice modulation
                 "similarity_boost": 0.85,
-                "style": 0.65,
+                "style": 0.55,             # Added expressiveness
                 "use_speaker_boost": True
             }
         }
@@ -95,10 +87,10 @@ def generate_audio(text):
             success = True
             break
         else:
-            print(f"Key #{idx + 1} failed or quota exceeded (Status Code: {res.status_code}). Switching to next key...")
+            print(f"Key #{idx + 1} failed (Status: {res.status_code}). Trying next key...")
 
     if not success:
-        print("All main voice attempts failed, trying fallback voice on Key #1...")
+        print("Fallback to secondary voice...")
         fallback_voice_id = "pNInz6obpgDQGcFmaJgB"
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{fallback_voice_id}"
         headers = {"Accept": "audio/mpeg", "Content-Type": "application/json", "xi-api-key": api_keys[0]}
