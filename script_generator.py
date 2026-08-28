@@ -7,29 +7,46 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_script():
     try:
-        categories = ["Technology", "Space & Science", "Human Psychology", "World History", "Bizarre Facts"]
-        selected_category = random.choice(categories)
+        topics = [
+            "Mind-Blowing Human Psychology Facts",
+            "Bizarre Historical Events That Actually Happened",
+            "Unbelievable Space and Universe Facts",
+            "Dark Secrets of Modern Technology",
+            "Deep Ocean Mysteries",
+            "Insane Science Facts"
+        ]
+        chosen_topic = random.choice(topics)
         model = genai.GenerativeModel('gemini-1.5-flash')
         
+        # Fixed 30-40 seconds script character length (approx 550-700 characters)
         prompt = (
-            f"Write a 40 to 50 seconds video script about an interesting fact in {selected_category} strictly in natural Roman Hinglish (like 'Kya aapko pata hai', 'Lekin sach ye hai'). "
-            "STRICT RULES: Do NOT use Hindi/Devanagari script, and do NOT use formal Urdu/English words. Keep it around 550-650 characters."
+            f"Write a completely unique, highly engaging short story or viral factual script about '{chosen_topic}' strictly in Roman Hinglish "
+            "(e.g. 'Kya aapko pata hai', 'Lekin sach ye hai', 'Waise toh ye baat'). "
+            "IMPORTANT: Script MUST be between 550 to 700 characters so that audio lasts around 30 to 40 seconds. "
+            "Do NOT output Hindi Devanagari script, English-only text, or any intro metadata."
         )
         
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(
-                temperature=0.85,
-                top_p=0.9
+                temperature=0.95,
+                top_p=0.95
             )
         )
         text = response.text.strip()
-        print(f"Generated Script:\n{text}")
+        print(f"Generated Script Topic ({chosen_topic}):\n{text}")
         return text
         
     except Exception as e:
         print(f"Gemini API Error: {e}")
-        return "Kya aapko pata hai ki space bilkul silent hota hai? Sound waves ko travel karne ke liye hawa chahiye hoti hai jo space mein nahi hoti. Isliye wahan chahe kitna bhi bada blast ho jaye, aapko koi aawaz sunai nahi degi!"
+        return (
+            "Kya aapko pata hai ki hamare dimaag ke paas itni memory space hoti hai "
+            "ki wo internet ki saari information ko aasani se store kar sakta hai? "
+            "Lekin hum fir bhi apni day-to-day life mein chhote chhote kaam bhool jaate hain. "
+            "Scientific research ke mutabiq hamara brain sirf unhi chizon ko yaad rakhta hai "
+            "jo hamare emotional state se connected hoti hain. Isliye agli baar koi baat yaad rakhni ho "
+            "toh usse kisi interesting feeling ke saath connect karna mat bhoolna!"
+        )
 
 def generate_audio(text):
     api_keys = [
@@ -39,15 +56,15 @@ def generate_audio(text):
     api_keys = [k for k in api_keys if k]
 
     if not api_keys:
-        raise ValueError("No ElevenLabs API keys found!")
+        raise ValueError("No ElevenLabs API keys found in repository secrets!")
 
-    # Deep Natural Male Voice
+    # Gojo / Anime Narration Viral Voice ID
     voice_id = "pNInz6obpgDQGcFmaJgB"
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
     success = False
     for idx, key in enumerate(api_keys):
-        print(f"Generating Audio with Key #{idx + 1}...")
+        print(f"Generating ElevenLabs Voice Over with Key #{idx + 1}...")
         headers = {
             "Accept": "audio/mpeg",
             "Content-Type": "application/json",
@@ -57,8 +74,8 @@ def generate_audio(text):
             "text": text,
             "model_id": "eleven_multilingual_v2",
             "voice_settings": {
-                "stability": 0.50, 
-                "similarity_boost": 0.75,
+                "stability": 0.45, 
+                "similarity_boost": 0.80,
                 "style": 0.20,
                 "use_speaker_boost": True
             }
@@ -71,6 +88,8 @@ def generate_audio(text):
             print("voice.mp3 generated successfully!")
             success = True
             break
+        else:
+            print(f"Key #{idx + 1} failed: {res.status_code}")
 
     if not success:
         raise Exception("All ElevenLabs API keys failed!")
