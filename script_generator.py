@@ -31,16 +31,16 @@ def get_script():
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = (
-            f"Write an energetic viral short reel script about '{chosen_topic}' strictly in Roman Hinglish. "
+            f"Write an energetic viral short reel script about '{chosen_topic}' strictly in Roman English alphabets (Hinglish). "
             f"{prompt_context} "
-            "Write exactly around 350-400 characters so voiceover duration stays strictly 18-22 seconds. "
-            "STRICT RULES: Do NOT output English translations. Write speech phonetically in Roman Hinglish."
+            "Write exactly around 30-40 words so voiceover duration stays strictly 18-22 seconds. "
+            "STRICT RULES: Do NOT output Urdu, Hindi or Arabic characters. Only use standard English English A-Z alphabets."
         )
         
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(
-                temperature=0.8,
+                temperature=0.7,
                 top_p=0.9
             )
         )
@@ -67,7 +67,7 @@ def generate_audio(text):
     if not api_keys:
         raise ValueError("No ElevenLabs API keys found!")
 
-    # Fast Energetic Bunty Voice Profile ID
+    # Bunty Voice Profile ID
     voice_id = "nPczCjzI2devNBz1zbdH" 
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
@@ -99,7 +99,6 @@ def generate_audio(text):
             break
 
     if not success:
-        # Fallback to high-energy voice if ID fails
         fallback_voice_id = "pNInz6obpgDQGcFmaJgB"
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{fallback_voice_id}"
         headers = {"Accept": "audio/mpeg", "Content-Type": "application/json", "xi-api-key": api_keys[0]}
