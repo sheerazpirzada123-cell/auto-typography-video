@@ -25,24 +25,28 @@ def fetch_bg_music():
             f.write(r.content)
 
 def fetch_hd_images(category):
-    """Fetches 2 distinct HD images based on topic category."""
     images = []
-    keywords = ["superhero", "avengers", "ironman"] if category == "MARVEL" else ["goku", "anime", "dragonball"]
-    
-    for i in range(2):
-        filename = f"hd_asset_{i}.jpg"
-        kw = random.choice(keywords)
+    urls = {
+        "MARVEL": [
+            "https://upload.wikimedia.org/wikipedia/commons/0/04/Iron_Man_cosplay.jpg",
+            "https://upload.wikimedia.org/wikipedia/commons/a/a2/Thor_Cosplay.jpg"
+        ],
+        "ANIME": [
+            "https://upload.wikimedia.org/wikipedia/commons/3/36/Goku_cosplay.jpg",
+            "https://upload.wikimedia.org/wikipedia/commons/e/e0/Anime_convention.jpg"
+        ]
+    }
+    selected_urls = urls.get(category, urls["MARVEL"])
+    for idx, url in enumerate(selected_urls):
+        filename = f"hd_asset_{idx}.jpg"
         try:
-            print(f"Fetching HD Image #{i+1} for: {kw}")
-            url = f"https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600&q=80" if category == "MARVEL" else f"https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&q=80"
             r = requests.get(url, timeout=10)
             if r.status_code == 200:
                 with open(filename, "wb") as f:
                     f.write(r.content)
                 images.append(filename)
         except Exception as e:
-            print(f"Image Download Exception: {e}")
-            
+            print(f"Download Error: {e}")
     return images
 
 def create_video():
@@ -60,7 +64,7 @@ def create_video():
     voice_audio = AudioFileClip("voice.mp3")
     duration = voice_audio.duration
 
-    bg_music = AudioFileClip("bg_music.mp3").volumex(0.12)
+    bg_music = AudioFileClip("bg_music.mp3").volumex(0.10)
     if bg_music.duration < duration:
         bg_music = bg_music.loop(duration=duration)
     else:
@@ -72,14 +76,14 @@ def create_video():
     bg = ColorClip(size=(1080, 1920), color=random.choice(bg_colors), duration=duration)
     video_clips = [bg]
 
-    # Overlay 2 Multiple HD Images throughout video timeline
+    # Dynamic Images at strategic timelines
     hd_images = fetch_hd_images(category)
     if len(hd_images) >= 1 and os.path.exists(hd_images[0]):
         img1 = (
             ImageClip(hd_images[0])
-            .set_start(1.5)
-            .set_duration(min(7.0, duration - 1.5))
-            .resize(width=450)
+            .set_start(2.5)
+            .set_duration(min(6.0, duration - 2.5))
+            .resize(width=480)
             .set_position(('center', 320))
         )
         video_clips.append(img1)
@@ -87,30 +91,40 @@ def create_video():
     if len(hd_images) >= 2 and os.path.exists(hd_images[1]) and duration > 10:
         img2 = (
             ImageClip(hd_images[1])
-            .set_start(9.0)
-            .set_duration(min(7.0, duration - 9.0))
-            .resize(width=450)
+            .set_start(10.0)
+            .set_duration(min(6.0, duration - 10.0))
+            .resize(width=480)
             .set_position(('center', 320))
         )
         video_clips.append(img2)
 
-    print("Transcribing audio with Whisper for exact text sync...")
-    model = WhisperModel("tiny", device="cpu", compute_type="int8")
-    segments, _ = model.transcribe("voice.mp3", word_timestamps=True)
+    print("Transcribing audio with Whisper (No Translation Fix)...")
+    script_words = []
+    if os.path.exists("script.txt"):
+        with open("script.txt", "r", encoding="utf-8") as f:
+            script_words = f.read().strip().split()
 
-    pop_audio = AudioFileClip("pop.wav").volumex(0.15)
+    model = WhisperModel("tiny", device="cpu", compute_type="int8")
+    segments, _ = model.transcribe("voice.mp3", word_timestamps=True, language="hi", task="transcribe")
+
+    pop_audio = AudioFileClip("pop.wav").volumex(0.18)
     color_palette = ['#C0392B', '#1F618D', '#117A65', '#D35400', '#2E4053', '#8E44AD']
     font_sizes = [95, 115, 130]
 
-    word_count = 0
+    word_idx = 0
     for segment in segments:
         for word_item in segment.words:
             start = word_item.start
             end = word_item.end
-            txt = word_item.word.strip().upper()
+
+            # Map exact Hinglish script word to eliminate English translation output
+            if script_words and word_idx < len(script_words):
+                txt = script_words[word_idx].upper()
+                word_idx += 1
+            else:
+                txt = word_item.word.strip().upper()
 
             if end > start and txt:
-                word_count += 1
                 txt_clip = (
                     TextClip(
                         txt,
@@ -126,12 +140,12 @@ def create_video():
                 )
                 video_clips.append(txt_clip)
 
-                if word_count % 2 == 0 and (start + pop_audio.duration <= duration):
+                if word_idx % 2 == 0 and (start + pop_audio.duration <= duration):
                     audio_stack.append(pop_audio.set_start(start))
 
     full_audio = CompositeAudioClip(audio_stack)
 
-    print("Rendering final updated video...")
+    print("Rendering final video...")
     final_video = CompositeVideoClip(video_clips).set_audio(full_audio)
     final_video.write_videofile(
         "final_output.mp4",
@@ -141,7 +155,7 @@ def create_video():
         preset="ultrafast",
         bitrate="2500k"
     )
-    print("final_output.mp4 successfully created!")
+    print("final_output.mp4 created successfully!")
 
 if __name__ == "__main__":
     create_video()
