@@ -1,0 +1,6 @@
+google-generativeai
+requests
+moviepy
+openai-whisper
+pillow
+pytz
