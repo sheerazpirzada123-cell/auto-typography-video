@@ -33,7 +33,7 @@ def get_script():
         prompt = (
             f"Write an energetic viral short reel script about '{chosen_topic}' strictly in Roman Hinglish. "
             f"{prompt_context} "
-            "Write exactly around 450-500 characters so voiceover duration stays strictly 25-30 seconds. "
+            "Write exactly around 400-450 characters so voiceover duration stays strictly 20-25 seconds. "
             "STRICT RULES: Do NOT output English translations. Write speech phonetically in Roman Hinglish."
         )
         
@@ -73,8 +73,7 @@ def generate_audio(text):
     if not api_keys:
         raise ValueError("No ElevenLabs API keys found!")
 
-    # Engaging, energetic male voice ID (Adam)
-    voice_id = "pNInz6obpgDQGcFmaJgB"
+    voice_id = "21m00Tcm4TlvDq8ikWAM" # High-energy engaging voice (Rachel)
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
     success = False
@@ -89,9 +88,9 @@ def generate_audio(text):
             "text": text,
             "model_id": "eleven_multilingual_v2",
             "voice_settings": {
-                "stability": 0.35,        # Low stability = Dynamic energetic human voice
-                "similarity_boost": 0.85,
-                "style": 0.30,
+                "stability": 0.40,
+                "similarity_boost": 0.80,
+                "style": 0.25,
                 "use_speaker_boost": True
             }
         }
