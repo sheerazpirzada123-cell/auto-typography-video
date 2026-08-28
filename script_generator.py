@@ -7,42 +7,64 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_script():
     try:
-        topics = [
-            "Mind-Blowing Marvel MCU Secrets",
-            "Dark Anime Secrets That Nobody Noticed",
-            "Goku vs Saitama Real Power Levels",
-            "Death Note Unknown Facts",
-            "Iron Man Hidden Armor Abilities"
+        # Separate topic pools so content never mixes
+        marvel_topics = [
+            "Iron Man Hidden Armor Ability in Marvel Comics",
+            "Why Thor's Hammer Mjolnir Is Way Overpowered",
+            "Thanos Real Secret Motivation That Was Hidden",
+            "Doctor Strange Unknown Time Manipulation Trick"
         ]
-        chosen_topic = random.choice(topics)
+        anime_topics = [
+            "Goku Infinite Stamina Real Secret in Dragon Ball",
+            "Saitama One Punch Man Unknown Origin Fact",
+            "Death Note Rule That Nobody Ever Noticed",
+            "Naruto Kyuubi Chakra Hidden Secret"
+        ]
+        
+        # Pick either Marvel or Anime exclusively
+        category = random.choice(["MARVEL", "ANIME"])
+        if category == "MARVEL":
+            chosen_topic = random.choice(marvel_topics)
+            prompt_context = "This video is STRICTLY about Marvel MCU / Comics only. Do NOT mention any Anime characters."
+        else:
+            chosen_topic = random.choice(anime_topics)
+            prompt_context = "This video is STRICTLY about Anime only. Do NOT mention Marvel, Avengers, or Iron Man."
+
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = (
             f"Write a viral short reel script about '{chosen_topic}' strictly in Roman Hinglish "
             "(e.g. 'Kya aapko pata hai', 'Lekin sach ye hai', 'Waise toh ye baat'). "
-            "Write exactly around 600 characters so voiceover duration stays strictly 30-40 seconds. "
+            f"{prompt_context} "
+            "Write exactly around 500-600 characters so voiceover duration stays strictly 25-35 seconds. "
             "STRICT RULES: Do NOT output English translations, only write speech phonetically in Roman Hinglish."
         )
         
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(
-                temperature=0.9,
+                temperature=0.8,
                 top_p=0.9
             )
         )
         text = response.text.strip()
-        print(f"Generated Script Topic ({chosen_topic}):\n{text}")
+        print(f"Generated Script Category ({category}) - Topic ({chosen_topic}):\n{text}")
+        
+        # Save active category for image search matching
+        with open("category.txt", "w", encoding="utf-8") as f:
+            f.write(category)
+            
         return text
         
     except Exception as e:
         print(f"Gemini API Error: {e}")
+        with open("category.txt", "w", encoding="utf-8") as f:
+            f.write("MARVEL")
         return (
             "Kya aapko pata hai ki Marvel comics mein Iron Man ka armor itna powerful hai "
             "ki wo Celestial powers ko bhi absorb kar sakta hai? Lekin MCU movies mein is detail ko "
-            "kabhi dikhaya hi nahi gaya! Waise hi Anime ki duniya mein Goku ki stamina "
-            "ke peeche ek aisa secret hai jo aadhe fans ko pata hi nahi. Agar aap bhi Anime aur Marvel "
-            "ke aise crazy details janna chahte ho, toh abhi follow kar lo!"
+            "kabhi dikhaya hi nahi gaya! Agar aap bhi Marvel ke aise crazy details janna chahte ho, "
+            "toh abhi follow kar lo!"
         )
 
 def generate_audio(text):
