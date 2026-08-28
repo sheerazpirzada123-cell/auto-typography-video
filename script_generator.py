@@ -67,13 +67,13 @@ def generate_audio(text):
     if not api_keys:
         raise ValueError("No ElevenLabs API keys found!")
 
-    # Bunty Voice / Hyper-energetic Indian Accent Male Voice ID
+    # Fast Energetic Bunty Voice Profile ID
     voice_id = "nPczCjzI2devNBz1zbdH" 
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
     success = False
     for idx, key in enumerate(api_keys):
-        print(f"Generating Real Bunty Voice with Key #{idx + 1}...")
+        print(f"Generating Bunty Voice with Key #{idx + 1}...")
         headers = {
             "Accept": "audio/mpeg",
             "Content-Type": "application/json",
@@ -83,7 +83,7 @@ def generate_audio(text):
             "text": text,
             "model_id": "eleven_multilingual_v2",
             "voice_settings": {
-                "stability": 0.15,          # Expressive fast Bunty style tone
+                "stability": 0.15,
                 "similarity_boost": 0.85,
                 "style": 0.65,
                 "use_speaker_boost": True
@@ -94,12 +94,12 @@ def generate_audio(text):
         if res.status_code == 200:
             with open("voice.mp3", "wb") as f:
                 f.write(res.content)
-            print("voice.mp3 (Bunty Voice) generated successfully!")
+            print("voice.mp3 generated successfully!")
             success = True
             break
 
     if not success:
-        # Fallback to high-energy voice if custom ID fails
+        # Fallback to high-energy voice if ID fails
         fallback_voice_id = "pNInz6obpgDQGcFmaJgB"
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{fallback_voice_id}"
         headers = {"Accept": "audio/mpeg", "Content-Type": "application/json", "xi-api-key": api_keys[0]}
@@ -108,7 +108,6 @@ def generate_audio(text):
         if res.status_code == 200:
             with open("voice.mp3", "wb") as f:
                 f.write(res.content)
-            print("voice.mp3 generated using Fallback Voice!")
 
 if __name__ == "__main__":
     text = get_script()
