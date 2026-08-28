@@ -7,55 +7,50 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_script():
     try:
-        marvel_topics = [
-            "Iron Man Hidden Armor Ability in Marvel Comics",
-            "Why Thor's Hammer Mjolnir Is Way Overpowered",
-            "Thanos Real Secret Motivation That Was Hidden",
-            "Doctor Strange Unknown Time Manipulation Trick"
-        ]
-        anime_topics = [
-            "Goku Infinite Stamina Real Secret in Dragon Ball",
-            "Saitama One Punch Man Unknown Origin Fact",
-            "Death Note Rule That Nobody Ever Noticed",
-            "Naruto Kyuubi Chakra Hidden Secret"
-        ]
+        categories = ["MARVEL", "ANIME", "DC_COMICS", "SCI_FI_FACTS", "POP_CULTURE"]
+        chosen_category = random.choice(categories)
         
-        category = random.choice(["MARVEL", "ANIME"])
-        if category == "MARVEL":
-            chosen_topic = random.choice(marvel_topics)
-            prompt_context = "This video is STRICTLY about Marvel MCU / Comics only."
-        else:
-            chosen_topic = random.choice(anime_topics)
-            prompt_context = "This video is STRICTLY about Anime only."
+        angles = [
+            "crazy dark secret theory",
+            "hidden power that nobody noticed",
+            "mind blowing fact that was deleted",
+            "most overpowered moment explained",
+            "shocking backstory detail"
+        ]
+        chosen_angle = random.choice(angles)
 
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = (
-            f"Write an energetic viral short reel script about '{chosen_topic}' strictly in Roman English alphabets (Hinglish). "
-            f"{prompt_context} "
-            "Write exactly around 30-40 words so voiceover duration stays strictly 18-22 seconds. "
-            "STRICT RULES: Do NOT output Urdu, Hindi or Arabic characters. Only use standard English English A-Z alphabets."
+            f"Generate a completely new, unique, viral short reel script about a {chosen_angle} in {chosen_category}. "
+            "Write strictly in Roman Hinglish using ONLY standard A-Z English alphabets. "
+            "STRICT RULES:\n"
+            "1. Length: Exactly 30 to 40 words (around 18-20 seconds spoken).\n"
+            "2. Do NOT use Urdu, Hindi, or Arabic characters.\n"
+            "3. Do NOT repeat previous facts about Iron Man Celestial armor or Thor.\n"
+            "4. Start with a catchy hook line.\n"
+            "5. End with a strong call to action like 'Follow for more!' or 'Abhi subscribe karo!'"
         )
         
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(
-                temperature=0.7,
-                top_p=0.9
+                temperature=0.98,
+                top_p=0.95
             )
         )
         text = response.text.strip()
-        print(f"Generated Script:\n{text}")
+        print(f"New Random Script Generated ({chosen_category}):\n{text}")
         return text
         
     except Exception as e:
         print(f"Gemini API Error: {e}")
-        return (
-            "Kya aapko pata hai ki Marvel comics mein Iron Man ka armor itna powerful hai "
-            "ki wo Celestial powers ko bhi absorb kar sakta hai? Lekin MCU movies mein is detail ko "
-            "kabhi dikhaya hi nahi gaya! Agar aap bhi Marvel ke aise crazy details janna chahte ho, "
-            "toh abhi follow kar lo!"
-        )
+        fallback_scripts = [
+            "Kya aapko pata hai ki Thor ka hammer Mjolnir kitna heavy hai? Isse sirf wahi utha sakta hai jo truly worthy ho! Aise aur facts ke liye follow kar lo!",
+            "Goku ki strength ka real secret kya hai? DBZ mein uski infinite transformation energy sabko shock kar deti hai! Channel ko abhi follow karo!",
+            "Batman ke paas Superman ko harane ka secret plan hamesha ready hota hai! DC comics ka yeh secret sabhi ko nahi pata! Aise facts ke liye follow kar lo!"
+        ]
+        return random.choice(fallback_scripts)
 
 def generate_audio(text):
     api_keys = [
@@ -67,7 +62,6 @@ def generate_audio(text):
     if not api_keys:
         raise ValueError("No ElevenLabs API keys found!")
 
-    # Bunty Voice Profile ID
     voice_id = "nPczCjzI2devNBz1zbdH" 
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
