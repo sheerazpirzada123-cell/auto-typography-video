@@ -24,33 +24,26 @@ def fetch_bg_music():
         with open("bg_music.mp3", "wb") as f:
             f.write(r.content)
 
-def fetch_relevant_png(idx, category):
-    filename = f"asset_{idx}.png"
-    if os.path.exists(filename):
-        return filename
-
-    try:
-        search_tag = "marvel,superhero" if category == "MARVEL" else "anime,goku"
-        print(f"Fetching HD Image for Category: {category}")
-        img_url = f"https://source.unsplash.com/featured/500x500/?{search_tag}"
-        r = requests.get(img_url, timeout=8)
-        if r.status_code == 200 and len(r.content) > 5000:
-            with open(filename, "wb") as f:
-                f.write(r.content)
-            return filename
-    except Exception as e:
-        print(f"Unsplash Fetch Warning: {e}")
-
-    # Clean HD Fallback Images
-    fallback_urls = {
-        "MARVEL": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=500&q=80",
-        "ANIME": "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&q=80"
-    }
-    url = fallback_urls.get(category, fallback_urls["MARVEL"])
-    r = requests.get(url)
-    with open(filename, "wb") as f:
-        f.write(r.content)
-    return filename
+def fetch_hd_images(category):
+    """Fetches 2 distinct HD images based on topic category."""
+    images = []
+    keywords = ["superhero", "avengers", "ironman"] if category == "MARVEL" else ["goku", "anime", "dragonball"]
+    
+    for i in range(2):
+        filename = f"hd_asset_{i}.jpg"
+        kw = random.choice(keywords)
+        try:
+            print(f"Fetching HD Image #{i+1} for: {kw}")
+            url = f"https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600&q=80" if category == "MARVEL" else f"https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&q=80"
+            r = requests.get(url, timeout=10)
+            if r.status_code == 200:
+                with open(filename, "wb") as f:
+                    f.write(r.content)
+                images.append(filename)
+        except Exception as e:
+            print(f"Image Download Exception: {e}")
+            
+    return images
 
 def create_video():
     if not os.path.exists("voice.mp3"):
@@ -75,34 +68,39 @@ def create_video():
 
     audio_stack = [voice_audio, bg_music]
 
-    bg_colors = [
-        (235, 240, 245),
-        (245, 230, 235),
-        (235, 230, 245),
-        (242, 245, 238)
-    ]
+    bg_colors = [(240, 243, 246), (245, 235, 238), (236, 233, 245)]
     bg = ColorClip(size=(1080, 1920), color=random.choice(bg_colors), duration=duration)
     video_clips = [bg]
 
-    # Add Topic-Matched HD Image
-    asset_file = fetch_relevant_png(0, category)
-    if os.path.exists(asset_file):
-        img_clip = (
-            ImageClip(asset_file)
-            .set_start(3.0)
-            .set_duration(min(6.0, duration - 3.0))
-            .resize(width=380)
-            .set_position(('center', 380))
+    # Overlay 2 Multiple HD Images throughout video timeline
+    hd_images = fetch_hd_images(category)
+    if len(hd_images) >= 1 and os.path.exists(hd_images[0]):
+        img1 = (
+            ImageClip(hd_images[0])
+            .set_start(1.5)
+            .set_duration(min(7.0, duration - 1.5))
+            .resize(width=450)
+            .set_position(('center', 320))
         )
-        video_clips.append(img_clip)
+        video_clips.append(img1)
 
-    print("Transcribing audio with Whisper...")
+    if len(hd_images) >= 2 and os.path.exists(hd_images[1]) and duration > 10:
+        img2 = (
+            ImageClip(hd_images[1])
+            .set_start(9.0)
+            .set_duration(min(7.0, duration - 9.0))
+            .resize(width=450)
+            .set_position(('center', 320))
+        )
+        video_clips.append(img2)
+
+    print("Transcribing audio with Whisper for exact text sync...")
     model = WhisperModel("tiny", device="cpu", compute_type="int8")
     segments, _ = model.transcribe("voice.mp3", word_timestamps=True)
 
     pop_audio = AudioFileClip("pop.wav").volumex(0.15)
     color_palette = ['#C0392B', '#1F618D', '#117A65', '#D35400', '#2E4053', '#8E44AD']
-    font_sizes = [90, 110, 125]
+    font_sizes = [95, 115, 130]
 
     word_count = 0
     for segment in segments:
@@ -122,7 +120,7 @@ def create_video():
                         method='caption',
                         size=(950, None)
                     )
-                    .set_position(('center', 1050))
+                    .set_position(('center', 1100))
                     .set_start(start)
                     .set_end(end)
                 )
@@ -133,7 +131,7 @@ def create_video():
 
     full_audio = CompositeAudioClip(audio_stack)
 
-    print("Rendering final synced video...")
+    print("Rendering final updated video...")
     final_video = CompositeVideoClip(video_clips).set_audio(full_audio)
     final_video.write_videofile(
         "final_output.mp4",
@@ -143,7 +141,7 @@ def create_video():
         preset="ultrafast",
         bitrate="2500k"
     )
-    print("final_output.mp4 completed successfully!")
+    print("final_output.mp4 successfully created!")
 
 if __name__ == "__main__":
     create_video()
