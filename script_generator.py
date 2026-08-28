@@ -53,21 +53,24 @@ def get_script():
         return random.choice(fallback_scripts)
 
 def generate_audio(text):
+    # 4 API Keys Fallback Support Added Here
     api_keys = [
         os.environ.get("ELEVENLABS_API_KEY"),
-        os.environ.get("ELEVENLABS_API_KEY_2")
+        os.environ.get("ELEVENLABS_API_KEY_2"),
+        os.environ.get("ELEVENLABS_API_KEY_3"),
+        os.environ.get("ELEVENLABS_API_KEY_4")
     ]
     api_keys = [k for k in api_keys if k]
 
     if not api_keys:
-        raise ValueError("No ElevenLabs API keys found!")
+        raise ValueError("No ElevenLabs API keys found in secrets!")
 
     voice_id = "nPczCjzI2devNBz1zbdH" 
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
     success = False
     for idx, key in enumerate(api_keys):
-        print(f"Generating Bunty Voice with Key #{idx + 1}...")
+        print(f"Trying ElevenLabs API Key #{idx + 1}...")
         headers = {
             "Accept": "audio/mpeg",
             "Content-Type": "application/json",
@@ -88,11 +91,14 @@ def generate_audio(text):
         if res.status_code == 200:
             with open("voice.mp3", "wb") as f:
                 f.write(res.content)
-            print("voice.mp3 generated successfully!")
+            print(f"voice.mp3 generated successfully using Key #{idx + 1}!")
             success = True
             break
+        else:
+            print(f"Key #{idx + 1} failed or quota exceeded (Status Code: {res.status_code}). Switching to next key...")
 
     if not success:
+        print("All main voice attempts failed, trying fallback voice on Key #1...")
         fallback_voice_id = "pNInz6obpgDQGcFmaJgB"
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{fallback_voice_id}"
         headers = {"Accept": "audio/mpeg", "Content-Type": "application/json", "xi-api-key": api_keys[0]}
