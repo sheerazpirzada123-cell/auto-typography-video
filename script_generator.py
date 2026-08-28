@@ -7,23 +7,26 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_script():
     try:
+        # Anime aur Marvel dedicated topics
         topics = [
-            "Mind-Blowing Human Psychology Facts",
-            "Bizarre Historical Events That Actually Happened",
-            "Unbelievable Space and Universe Facts",
-            "Dark Secrets of Modern Technology",
-            "Deep Ocean Mysteries",
-            "Insane Science Facts"
+            "Mind-Blowing Marvel Cinematic Universe Facts",
+            "Dark and Unknown Anime Lore Secrets",
+            "Iron Man vs Batman Hidden Comic Facts",
+            "Goku vs Saitama Power Scalings",
+            "Unbelievable Secrets About Naruto and Sasuke",
+            "Marvel Multiverse Theories That Will Blow Your Mind",
+            "Death Note Psychological Hidden Details"
         ]
         chosen_topic = random.choice(topics)
         model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # Fixed 30-40 seconds script character length (approx 550-700 characters)
+        # Audio duration strictly 30-40 sec (550 to 700 chars)
         prompt = (
-            f"Write a completely unique, highly engaging short story or viral factual script about '{chosen_topic}' strictly in Roman Hinglish "
+            f"Write a viral, highly engaging script about '{chosen_topic}' strictly in Roman Hinglish "
             "(e.g. 'Kya aapko pata hai', 'Lekin sach ye hai', 'Waise toh ye baat'). "
-            "IMPORTANT: Script MUST be between 550 to 700 characters so that audio lasts around 30 to 40 seconds. "
-            "Do NOT output Hindi Devanagari script, English-only text, or any intro metadata."
+            "The tone must be energetic, enthusiastic, and confident like a famous anime/marvel content creator. "
+            "IMPORTANT: Script MUST be between 550 to 700 characters long so the voiceover stays strictly 30-40 seconds. "
+            "Do NOT output Hindi Devanagari text, English-only text, or metadata."
         )
         
         response = model.generate_content(
@@ -40,12 +43,11 @@ def get_script():
     except Exception as e:
         print(f"Gemini API Error: {e}")
         return (
-            "Kya aapko pata hai ki hamare dimaag ke paas itni memory space hoti hai "
-            "ki wo internet ki saari information ko aasani se store kar sakta hai? "
-            "Lekin hum fir bhi apni day-to-day life mein chhote chhote kaam bhool jaate hain. "
-            "Scientific research ke mutabiq hamara brain sirf unhi chizon ko yaad rakhta hai "
-            "jo hamare emotional state se connected hoti hain. Isliye agli baar koi baat yaad rakhni ho "
-            "toh usse kisi interesting feeling ke saath connect karna mat bhoolna!"
+            "Kya aapko pata hai ki Marvel comics mein Iron Man ka armor itna powerful hai "
+            "ki wo Celestial powers ko bhi absorb kar sakta hai? Lekin MCU movies mein is detail ko "
+            "kabhi dikhaya hi nahi gaya! Waise hi Anime ki duniya mein Goku ki Infinite stamina "
+            "ke peeche ek aisa secret hai jo aadhe fans ko pata hi nahi. Agar aap bhi Anime aur Marvel "
+            "ke aise crazy theories janna chahte ho, toh abhi follow kar lo taaki koi episode miss na ho!"
         )
 
 def generate_audio(text):
@@ -56,9 +58,9 @@ def generate_audio(text):
     api_keys = [k for k in api_keys if k]
 
     if not api_keys:
-        raise ValueError("No ElevenLabs API keys found in repository secrets!")
+        raise ValueError("No ElevenLabs API keys found!")
 
-    # Gojo / Anime Narration Viral Voice ID
+    # Deep, confident storytelling voice ID
     voice_id = "pNInz6obpgDQGcFmaJgB"
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
@@ -74,9 +76,9 @@ def generate_audio(text):
             "text": text,
             "model_id": "eleven_multilingual_v2",
             "voice_settings": {
-                "stability": 0.45, 
-                "similarity_boost": 0.80,
-                "style": 0.20,
+                "stability": 0.55, 
+                "similarity_boost": 0.75,
+                "style": 0.18,
                 "use_speaker_boost": True
             }
         }
