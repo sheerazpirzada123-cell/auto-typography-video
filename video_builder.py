@@ -2,6 +2,7 @@ import os
 import random
 import requests
 import numpy as np
+from PIL import Image, ImageDraw
 from scipy.io import wavfile
 from faster_whisper import WhisperModel
 from moviepy.editor import TextClip, CompositeVideoClip, AudioFileClip, ColorClip, CompositeAudioClip, ImageClip
@@ -9,10 +10,10 @@ from moviepy.editor import TextClip, CompositeVideoClip, AudioFileClip, ColorCli
 def create_pop_sound(filename="pop.wav"):
     if not os.path.exists(filename):
         sample_rate = 44100
-        duration = 0.03
+        duration = 0.04
         t = np.linspace(0, duration, int(sample_rate * duration), False)
-        freq = np.linspace(1000, 250, len(t))
-        waveform = np.sin(2 * np.pi * freq * t) * np.exp(-t * 100)
+        freq = np.linspace(1200, 300, len(t))
+        waveform = np.sin(2 * np.pi * freq * t) * np.exp(-t * 80)
         audio_data = (waveform * 32767).astype(np.int16)
         wavfile.write(filename, sample_rate, audio_data)
 
@@ -24,29 +25,38 @@ def fetch_bg_music():
         with open("bg_music.mp3", "wb") as f:
             f.write(r.content)
 
+def create_fallback_image(filename, category):
+    img = Image.new('RGB', (500, 500), color=(30, 30, 40))
+    d = ImageDraw.Draw(img)
+    color = (220, 50, 50) if category == "MARVEL" else (240, 160, 40)
+    d.rectangle([50, 50, 450, 450], outline=color, width=10)
+    img.save(filename)
+
 def fetch_hd_images(category):
     images = []
     urls = {
         "MARVEL": [
-            "https://upload.wikimedia.org/wikipedia/commons/0/04/Iron_Man_cosplay.jpg",
-            "https://upload.wikimedia.org/wikipedia/commons/a/a2/Thor_Cosplay.jpg"
+            "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f9b8.png",
+            "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/26a1.png"
         ],
         "ANIME": [
-            "https://upload.wikimedia.org/wikipedia/commons/3/36/Goku_cosplay.jpg",
-            "https://upload.wikimedia.org/wikipedia/commons/e/e0/Anime_convention.jpg"
+            "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f30f.png",
+            "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f525.png"
         ]
     }
     selected_urls = urls.get(category, urls["MARVEL"])
     for idx, url in enumerate(selected_urls):
-        filename = f"hd_asset_{idx}.jpg"
+        filename = f"hd_asset_{idx}.png"
         try:
-            r = requests.get(url, timeout=10)
+            r = requests.get(url, timeout=5)
             if r.status_code == 200:
                 with open(filename, "wb") as f:
                     f.write(r.content)
                 images.append(filename)
-        except Exception as e:
-            print(f"Download Error: {e}")
+        except Exception:
+            create_fallback_image(filename, category)
+            images.append(filename)
+            
     return images
 
 def create_video():
@@ -64,7 +74,7 @@ def create_video():
     voice_audio = AudioFileClip("voice.mp3")
     duration = voice_audio.duration
 
-    bg_music = AudioFileClip("bg_music.mp3").volumex(0.10)
+    bg_music = AudioFileClip("bg_music.mp3").volumex(0.08)
     if bg_music.duration < duration:
         bg_music = bg_music.loop(duration=duration)
     else:
@@ -76,29 +86,31 @@ def create_video():
     bg = ColorClip(size=(1080, 1920), color=random.choice(bg_colors), duration=duration)
     video_clips = [bg]
 
-    # Dynamic Images at strategic timelines
+    # Smooth animated images (Fade In + Pop Effect)
     hd_images = fetch_hd_images(category)
     if len(hd_images) >= 1 and os.path.exists(hd_images[0]):
         img1 = (
             ImageClip(hd_images[0])
-            .set_start(2.5)
-            .set_duration(min(6.0, duration - 2.5))
-            .resize(width=480)
-            .set_position(('center', 320))
+            .set_start(2.0)
+            .set_duration(min(5.0, duration - 2.0))
+            .resize(width=350)
+            .crossfadein(0.5)
+            .set_position(('center', 380))
         )
         video_clips.append(img1)
 
-    if len(hd_images) >= 2 and os.path.exists(hd_images[1]) and duration > 10:
+    if len(hd_images) >= 2 and os.path.exists(hd_images[1]) and duration > 8:
         img2 = (
             ImageClip(hd_images[1])
-            .set_start(10.0)
-            .set_duration(min(6.0, duration - 10.0))
-            .resize(width=480)
-            .set_position(('center', 320))
+            .set_start(8.0)
+            .set_duration(min(5.0, duration - 8.0))
+            .resize(width=350)
+            .crossfadein(0.5)
+            .set_position(('center', 380))
         )
         video_clips.append(img2)
 
-    print("Transcribing audio with Whisper (No Translation Fix)...")
+    print("Transcribing audio with Whisper...")
     script_words = []
     if os.path.exists("script.txt"):
         with open("script.txt", "r", encoding="utf-8") as f:
@@ -107,17 +119,16 @@ def create_video():
     model = WhisperModel("tiny", device="cpu", compute_type="int8")
     segments, _ = model.transcribe("voice.mp3", word_timestamps=True, language="hi", task="transcribe")
 
-    pop_audio = AudioFileClip("pop.wav").volumex(0.18)
+    pop_audio = AudioFileClip("pop.wav").volumex(0.20)
     color_palette = ['#C0392B', '#1F618D', '#117A65', '#D35400', '#2E4053', '#8E44AD']
     font_sizes = [95, 115, 130]
 
     word_idx = 0
     for segment in segments:
         for word_item in segment.words:
-            start = word_item.start
-            end = word_item.end
+            start = max(0, word_item.start)
+            end = min(duration, word_item.end)
 
-            # Map exact Hinglish script word to eliminate English translation output
             if script_words and word_idx < len(script_words):
                 txt = script_words[word_idx].upper()
                 word_idx += 1
@@ -134,7 +145,7 @@ def create_video():
                         method='caption',
                         size=(950, None)
                     )
-                    .set_position(('center', 1100))
+                    .set_position(('center', 1050))
                     .set_start(start)
                     .set_end(end)
                 )
@@ -145,7 +156,7 @@ def create_video():
 
     full_audio = CompositeAudioClip(audio_stack)
 
-    print("Rendering final video...")
+    print("Rendering video...")
     final_video = CompositeVideoClip(video_clips).set_audio(full_audio)
     final_video.write_videofile(
         "final_output.mp4",
@@ -155,7 +166,7 @@ def create_video():
         preset="ultrafast",
         bitrate="2500k"
     )
-    print("final_output.mp4 created successfully!")
+    print("Video rendered successfully!")
 
 if __name__ == "__main__":
     create_video()
