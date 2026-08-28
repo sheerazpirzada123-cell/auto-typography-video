@@ -2,7 +2,7 @@ google-generativeai
 requests
 faster-whisper
 moviepy==1.0.3
-pillow
+Pillow==9.5.0
 pytz
 numpy
 scipy
