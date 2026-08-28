@@ -4,16 +4,17 @@ from moviepy.editor import TextClip, CompositeVideoClip, AudioFileClip, ColorCli
 
 def create_video():
     if not os.path.exists("voice.mp3"):
-        raise FileNotFoundError("voice.mp3 missing!")
+        raise FileNotFoundError("voice.mp3 missing! Run script_generator.py first.")
 
+    print("Loading audio...")
     audio = AudioFileClip("voice.mp3")
     duration = audio.duration
     
-    # Dark modern vertical background
+    # 9:16 Vertical background (1080x1920)
     bg = ColorClip(size=(1080, 1920), color=(12, 12, 12), duration=duration)
     clips = [bg]
 
-    print("Transcribing audio for typography timing...")
+    print("Transcribing audio with faster-whisper for typography...")
     model = WhisperModel("tiny", device="cpu", compute_type="int8")
     segments, _ = model.transcribe("voice.mp3", word_timestamps=True)
 
@@ -24,7 +25,6 @@ def create_video():
             end = word.end
 
             if end > start:
-                # Dynamic Yellow Bold Typography Overlay
                 txt_clip = (
                     TextClip(
                         txt,
@@ -40,7 +40,7 @@ def create_video():
                 )
                 clips.append(txt_clip)
 
-    print("Rendering long duration vertical video...")
+    print("Rendering final synced vertical video...")
     final_video = CompositeVideoClip(clips).set_audio(audio)
     final_video.write_videofile(
         "final_output.mp4",
@@ -50,7 +50,7 @@ def create_video():
         preset="ultrafast",
         bitrate="2500k"
     )
-    print("final_output.mp4 rendered successfully!")
+    print("final_output.mp4 successfully created!")
 
 if __name__ == "__main__":
     create_video()
