@@ -31,11 +31,10 @@ def get_script():
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = (
-            f"Write a viral short reel script about '{chosen_topic}' strictly in Roman Hinglish "
-            "(e.g. 'Kya aapko pata hai', 'Lekin sach ye hai', 'Waise toh ye baat'). "
+            f"Write an energetic viral short reel script about '{chosen_topic}' strictly in Roman Hinglish. "
             f"{prompt_context} "
-            "Write exactly around 500 characters so voiceover duration stays strictly 25-30 seconds. "
-            "STRICT RULES: Do NOT output English translations, only write speech phonetically in Roman Hinglish."
+            "Write exactly around 450-500 characters so voiceover duration stays strictly 25-30 seconds. "
+            "STRICT RULES: Do NOT output English translations. Write speech phonetically in Roman Hinglish."
         )
         
         response = model.generate_content(
@@ -74,12 +73,13 @@ def generate_audio(text):
     if not api_keys:
         raise ValueError("No ElevenLabs API keys found!")
 
+    # Engaging, energetic male voice ID (Adam)
     voice_id = "pNInz6obpgDQGcFmaJgB"
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
     success = False
     for idx, key in enumerate(api_keys):
-        print(f"Generating Audio with Key #{idx + 1}...")
+        print(f"Generating Natural Human Voice with Key #{idx + 1}...")
         headers = {
             "Accept": "audio/mpeg",
             "Content-Type": "application/json",
@@ -89,9 +89,9 @@ def generate_audio(text):
             "text": text,
             "model_id": "eleven_multilingual_v2",
             "voice_settings": {
-                "stability": 0.55, 
-                "similarity_boost": 0.75,
-                "style": 0.18,
+                "stability": 0.35,        # Low stability = Dynamic energetic human voice
+                "similarity_boost": 0.85,
+                "style": 0.30,
                 "use_speaker_boost": True
             }
         }
