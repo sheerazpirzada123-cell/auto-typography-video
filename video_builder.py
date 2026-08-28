@@ -34,9 +34,11 @@ def create_video():
     voice_audio = AudioFileClip("voice.mp3")
     duration = voice_audio.duration
 
-    # Background music continuous loop
+    # Music drop segment (starts 10s into the audio file for the best section)
     raw_bg = AudioFileClip("bg_music.mp3")
-    bg_music = audio_loop(raw_bg, duration=duration).volumex(0.10)
+    start_time = 10 if raw_bg.duration > 15 else 0
+    bg_cut = raw_bg.subclip(start_time, min(start_time + duration, raw_bg.duration))
+    bg_music = audio_loop(bg_cut, duration=duration).volumex(0.12)
 
     audio_stack = [voice_audio, bg_music]
 
@@ -44,40 +46,51 @@ def create_video():
     bg = ColorClip(size=(1080, 1920), color=random.choice(bg_colors), duration=duration)
     video_clips = [bg]
 
-    # Read clean script words from script.txt
+    # Script words reading
     if os.path.exists("script.txt"):
         with open("script.txt", "r", encoding="utf-8") as f:
             raw_text = f.read().strip()
-            # Clean non-ASCII characters if any
             clean_text = ''.join([c for c in raw_text if ord(c) < 128])
             words = [w.strip().upper() for w in clean_text.split() if w.strip()]
     else:
-        words = ["MARVEL", "COMICS", "FACTS"]
+        words = ["MARVEL", "COMICS", "FACTS", "ARE", "CRAZY"]
 
     total_words = len(words)
     if total_words > 0:
         time_per_word = duration / total_words
         pop_audio = AudioFileClip("pop.wav").volumex(0.20)
         color_palette = ['#C0392B', '#1F618D', '#117A65', '#D35400', '#2E4053', '#8E44AD']
-        font_sizes = [110, 125, 140]
 
-        for i, word in enumerate(words):
+        words_per_page = 4  # Each page holds up to 4 stacked words
+        
+        for i in range(total_words):
+            page_index = i // words_per_page
+            word_in_page = i % words_per_page
+            
+            page_end_word = min((page_index + 1) * words_per_page, total_words)
+            page_end_time = page_end_word * time_per_word
+
             start = i * time_per_word
-            end = min(duration, (i + 1) * time_per_word)
+            
+            page_words_so_far = words[page_index * words_per_page : i + 1]
+            display_text = "\n".join(page_words_so_far)
 
-            if end > start:
+            segment_end = (i + 1) * time_per_word if word_in_page < (words_per_page - 1) and (i + 1) < total_words else page_end_time
+
+            if segment_end > start:
                 txt_clip = (
                     TextClip(
-                        word,
-                        fontsize=random.choice(font_sizes),
+                        display_text,
+                        fontsize=105,
                         color=random.choice(color_palette),
                         font='DejaVu-Sans-Bold',
+                        align='center',
                         method='caption',
-                        size=(950, None)
+                        size=(900, None)
                     )
                     .set_position(('center', 'center'))
                     .set_start(start)
-                    .set_end(end)
+                    .set_end(segment_end)
                 )
                 video_clips.append(txt_clip)
 
