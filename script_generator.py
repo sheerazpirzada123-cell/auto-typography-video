@@ -1,33 +1,21 @@
 import os
 import random
-import requests
 import google.generativeai as genai
+from gtts import gTTS
 
-# Setup Gemini API Key
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_script():
     try:
-        # Har run par random category choose hogi
-        categories = [
-            "Technology", 
-            "Space & Science", 
-            "Human Psychology", 
-            "World History", 
-            "Bizarre Facts", 
-            "Life Hacks"
-        ]
+        categories = ["Technology", "Space & Science", "Human Psychology", "World History", "Bizarre Facts"]
         selected_category = random.choice(categories)
-        
-        # Valid Gemini model
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = (
-            f"Give me 1 extremely shocking, rare, and interesting short fact about {selected_category} in simple Hinglish for a viral short reel. "
-            "STRICT LIMIT: Maximum 200 characters long. Punchy typography style script."
+            f"Write a 1-minute deep-explain interesting fact script about {selected_category} in simple Hinglish (Hindi written in Roman English Script). "
+            "Make it sound very engaging for a YouTube Short / Instagram Reel. Write around 600-800 characters long script."
         )
         
-        # High temperature for unique outputs on every run
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(
@@ -35,51 +23,21 @@ def get_script():
                 top_p=0.95
             )
         )
-        
         text = response.text.strip()
-        print(f"Category: {selected_category}")
-        print(f"Generated Script: {text}")
-        return text[:250]
-        
+        print(f"Generated Script:\n{text}")
+        return text
     except Exception as e:
-        print(f"Gemini API Exception (using fallback): {e}")
-        fallbacks = [
-            "Did you know? Honey never spoils! Archeologists found 3000 year old edible honey.",
-            "Bananas are naturally radioactive because of potassium! Crazy right?",
-            "Octopuses have three hearts and blue blood! Mind blown!"
-        ]
-        return random.choice(fallbacks)
+        print(f"Gemini API Error: {e}")
+        return "Kya aap jante hain ki space bilkul silent hai kyunki wahan sound wave carry karne ke liye koi atmosphere nahi hota!"
 
 def generate_audio(text):
-    api_key = os.environ.get("ELEVENLABS_API_KEY")
-    if not api_key:
-        raise ValueError("ELEVENLABS_API_KEY secret is missing in repository settings!")
-
-    # Free Tier supported default Voice ID (George)
-    voice_id = "JBFqnCBsd6RMkjVDRZzb"
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-    
-    headers = {
-        "Accept": "audio/mpeg",
-        "Content-Type": "application/json",
-        "xi-api-key": api_key
-    }
-    
-    # Updated active ElevenLabs model
-    data = {
-        "text": text,
-        "model_id": "eleven_flash_v2_5",
-        "voice_settings": {"stability": 0.4, "similarity_boost": 0.7}
-    }
-    
-    res = requests.post(url, json=data, headers=headers)
-    if res.status_code == 200:
-        with open("voice.mp3", "wb") as f:
-            f.write(res.content)
-        print("voice.mp3 successfully generated!")
-    else:
-        raise Exception(f"ElevenLabs API Error: {res.status_code} - {res.text}")
+    # gTTS with Devanagari/Hindi voice pronunciation output
+    tts = gTTS(text=text, lang='hi', slow=False)
+    tts.save("voice.mp3")
+    print("voice.mp3 successfully created via gTTS!")
 
 if __name__ == "__main__":
     text = get_script()
+    with open("script.txt", "w", encoding="utf-8") as f:
+        f.write(text)
     generate_audio(text)
