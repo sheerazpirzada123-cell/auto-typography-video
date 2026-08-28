@@ -7,7 +7,6 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_script():
     try:
-        # Separate topic pools so content never mixes
         marvel_topics = [
             "Iron Man Hidden Armor Ability in Marvel Comics",
             "Why Thor's Hammer Mjolnir Is Way Overpowered",
@@ -21,14 +20,13 @@ def get_script():
             "Naruto Kyuubi Chakra Hidden Secret"
         ]
         
-        # Pick either Marvel or Anime exclusively
         category = random.choice(["MARVEL", "ANIME"])
         if category == "MARVEL":
             chosen_topic = random.choice(marvel_topics)
-            prompt_context = "This video is STRICTLY about Marvel MCU / Comics only. Do NOT mention any Anime characters."
+            prompt_context = "This video is STRICTLY about Marvel MCU / Comics only. Do NOT mention Anime."
         else:
             chosen_topic = random.choice(anime_topics)
-            prompt_context = "This video is STRICTLY about Anime only. Do NOT mention Marvel, Avengers, or Iron Man."
+            prompt_context = "This video is STRICTLY about Anime only. Do NOT mention Marvel or Avengers."
 
         model = genai.GenerativeModel('gemini-1.5-flash')
         
@@ -36,7 +34,7 @@ def get_script():
             f"Write a viral short reel script about '{chosen_topic}' strictly in Roman Hinglish "
             "(e.g. 'Kya aapko pata hai', 'Lekin sach ye hai', 'Waise toh ye baat'). "
             f"{prompt_context} "
-            "Write exactly around 500-600 characters so voiceover duration stays strictly 25-35 seconds. "
+            "Write exactly around 500 characters so voiceover duration stays strictly 25-30 seconds. "
             "STRICT RULES: Do NOT output English translations, only write speech phonetically in Roman Hinglish."
         )
         
@@ -50,7 +48,6 @@ def get_script():
         text = response.text.strip()
         print(f"Generated Script Category ({category}) - Topic ({chosen_topic}):\n{text}")
         
-        # Save active category for image search matching
         with open("category.txt", "w", encoding="utf-8") as f:
             f.write(category)
             
