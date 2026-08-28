@@ -4,3 +4,5 @@ faster-whisper
 moviepy==1.0.3
 pillow
 pytz
+numpy
+scipy
