@@ -1,6 +1,5 @@
 import os
 import random
-import requests
 import numpy as np
 from scipy.io import wavfile
 from faster_whisper import WhisperModel
@@ -17,31 +16,25 @@ def create_pop_sound(filename="pop.wav"):
         audio_data = (waveform * 32767).astype(np.int16)
         wavfile.write(filename, sample_rate, audio_data)
 
-def fetch_bg_music():
-    if not os.path.exists("bg_music.mp3"):
-        print("Downloading Continuous Background Track...")
-        url = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"
-        r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with open("bg_music.mp3", "wb") as f:
-            f.write(r.content)
-
 def create_video():
     if not os.path.exists("voice.mp3"):
         raise FileNotFoundError("voice.mp3 missing!")
+        
+    if not os.path.exists("bg_music.mp3"):
+        raise FileNotFoundError("Please upload 'bg_music.mp3' to repository folder!")
 
-    fetch_bg_music()
     create_pop_sound("pop.wav")
 
     voice_audio = AudioFileClip("voice.mp3")
     duration = voice_audio.duration
 
-    # Continuous BG Music loop setup
+    # Continuous background music loop setup using your uploaded bg_music.mp3
     raw_bg = AudioFileClip("bg_music.mp3")
     bg_music = audio_loop(raw_bg, duration=duration).volumex(0.10)
 
     audio_stack = [voice_audio, bg_music]
 
-    # Clean minimalist color background without pictures
+    # Minimal clean background colors without images
     bg_colors = [(240, 243, 246), (245, 235, 238), (236, 233, 245), (230, 240, 235)]
     bg = ColorClip(size=(1080, 1920), color=random.choice(bg_colors), duration=duration)
     video_clips = [bg]
@@ -59,7 +52,7 @@ def create_video():
     color_palette = ['#C0392B', '#1F618D', '#117A65', '#D35400', '#2E4053', '#8E44AD']
     font_sizes = [110, 125, 140]
 
-    # Perfect Alignment Fix: Direct timestamp mapping per word from Whisper
+    # Direct millisecond alignment per word
     word_count = 0
     for segment in segments:
         for word_info in segment.words:
@@ -78,19 +71,18 @@ def create_video():
                         method='caption',
                         size=(950, None)
                     )
-                    .set_position(('center', 'center')) # Perfect center lock with voice alignment
+                    .set_position(('center', 'center'))
                     .set_start(start)
                     .set_end(end)
                 )
                 video_clips.append(txt_clip)
 
-                # Pop audio sync per word transition
                 if start + pop_audio.duration <= duration:
                     audio_stack.append(pop_audio.set_start(start))
 
     full_audio = CompositeAudioClip(audio_stack)
 
-    print(f"Rendering final video with {word_count} aligned words...")
+    print("Rendering final video...")
     final_video = CompositeVideoClip(video_clips).set_audio(full_audio)
     final_video.write_videofile(
         "final_output.mp4",
