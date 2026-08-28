@@ -3,6 +3,7 @@ import random
 import requests
 import google.generativeai as genai
 
+# Setup Gemini API Key
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_script():
@@ -10,8 +11,8 @@ def get_script():
         categories = ["Technology", "Space & Science", "Human Psychology", "World History", "Bizarre Facts", "Life Hacks"]
         selected_category = random.choice(categories)
         
-        # Fixed model name for current API version
-        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        # Fixed valid model name
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = (
             f"Give me 1 extremely shocking, rare, and interesting short fact about {selected_category} in simple Hinglish for a viral short reel. "
@@ -43,7 +44,7 @@ def get_script():
 def generate_audio(text):
     api_key = os.environ.get("ELEVENLABS_API_KEY")
     if not api_key:
-        raise ValueError("ELEVENLABS_API_KEY secret is missing!")
+        raise ValueError("ELEVENLABS_API_KEY secret is missing in repository settings!")
 
     voice_id = "21m00Tcm4TlvDq8ikWAM"
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
@@ -53,9 +54,11 @@ def generate_audio(text):
         "Content-Type": "application/json",
         "xi-api-key": api_key
     }
+    
+    # Updated to ElevenLabs active non-deprecated model
     data = {
         "text": text,
-        "model_id": "eleven_monolingual_v1",
+        "model_id": "eleven_flash_v2_5",
         "voice_settings": {"stability": 0.4, "similarity_boost": 0.7}
     }
     
