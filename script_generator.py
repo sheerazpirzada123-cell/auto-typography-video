@@ -3,7 +3,6 @@ import random
 import requests
 import google.generativeai as genai
 
-# Setup Gemini API Key
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_script():
@@ -12,10 +11,9 @@ def get_script():
         selected_category = random.choice(categories)
         model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # 40-50 Seconds ki video ke liye length adjust kar di gayi hai (approx 500-600 characters)
         prompt = (
-            f"Write a 40 to 50 seconds engaging short script about an interesting fact in {selected_category} in natural Hinglish. "
-            "Write around 550 to 650 characters. Do NOT use fancy words. Make it sound like a human talking to a friend naturally for a viral reel."
+            f"Write a 40 to 50 seconds video script about an interesting fact in {selected_category} strictly in natural Roman Hinglish (like 'Kya aapko pata hai', 'Lekin sach ye hai'). "
+            "STRICT RULES: Do NOT use Hindi/Devanagari script, and do NOT use formal Urdu/English words. Keep it around 550-650 characters."
         )
         
         response = model.generate_content(
@@ -31,7 +29,7 @@ def get_script():
         
     except Exception as e:
         print(f"Gemini API Error: {e}")
-        return "Kya aap jante hain ki space bilkul silent hai? Space mein sound waves ko travel karne ke liye koi atmosphere nahi hota, isliye wahan chahe kitna bhi bada blast ho jaye, aapko koi aawaz sunai nahi degi!"
+        return "Kya aapko pata hai ki space bilkul silent hota hai? Sound waves ko travel karne ke liye hawa chahiye hoti hai jo space mein nahi hoti. Isliye wahan chahe kitna bhi bada blast ho jaye, aapko koi aawaz sunai nahi degi!"
 
 def generate_audio(text):
     api_keys = [
@@ -41,26 +39,25 @@ def generate_audio(text):
     api_keys = [k for k in api_keys if k]
 
     if not api_keys:
-        raise ValueError("No ElevenLabs API keys found in repository secrets!")
+        raise ValueError("No ElevenLabs API keys found!")
 
-    # Deep Natural Male Voice ID (Adam)
+    # Deep Natural Male Voice
     voice_id = "pNInz6obpgDQGcFmaJgB"
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
     success = False
     for idx, key in enumerate(api_keys):
-        print(f"Trying ElevenLabs Key #{idx + 1}...")
+        print(f"Generating Audio with Key #{idx + 1}...")
         headers = {
             "Accept": "audio/mpeg",
             "Content-Type": "application/json",
             "xi-api-key": key
         }
-        # Stability aur Similarity boost settings change ki hain AI-robot voice effect hatane ke liye
         data = {
             "text": text,
-            "model_id": "eleven_flash_v2_5",
+            "model_id": "eleven_multilingual_v2",
             "voice_settings": {
-                "stability": 0.55, 
+                "stability": 0.50, 
                 "similarity_boost": 0.75,
                 "style": 0.20,
                 "use_speaker_boost": True
@@ -71,11 +68,9 @@ def generate_audio(text):
         if res.status_code == 200:
             with open("voice.mp3", "wb") as f:
                 f.write(res.content)
-            print(f"voice.mp3 generated successfully with Key #{idx + 1}!")
+            print("voice.mp3 generated successfully!")
             success = True
             break
-        else:
-            print(f"Key #{idx + 1} failed: {res.status_code}")
 
     if not success:
         raise Exception("All ElevenLabs API keys failed!")
