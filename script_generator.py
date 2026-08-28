@@ -23,17 +23,17 @@ def get_script():
         category = random.choice(["MARVEL", "ANIME"])
         if category == "MARVEL":
             chosen_topic = random.choice(marvel_topics)
-            prompt_context = "This video is STRICTLY about Marvel MCU / Comics only. Do NOT mention Anime."
+            prompt_context = "This video is STRICTLY about Marvel MCU / Comics only."
         else:
             chosen_topic = random.choice(anime_topics)
-            prompt_context = "This video is STRICTLY about Anime only. Do NOT mention Marvel or Avengers."
+            prompt_context = "This video is STRICTLY about Anime only."
 
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = (
             f"Write an energetic viral short reel script about '{chosen_topic}' strictly in Roman Hinglish. "
             f"{prompt_context} "
-            "Write exactly around 400-450 characters so voiceover duration stays strictly 20-25 seconds. "
+            "Write exactly around 350-400 characters so voiceover duration stays strictly 18-22 seconds. "
             "STRICT RULES: Do NOT output English translations. Write speech phonetically in Roman Hinglish."
         )
         
@@ -45,17 +45,11 @@ def get_script():
             )
         )
         text = response.text.strip()
-        print(f"Generated Script Category ({category}) - Topic ({chosen_topic}):\n{text}")
-        
-        with open("category.txt", "w", encoding="utf-8") as f:
-            f.write(category)
-            
+        print(f"Generated Script:\n{text}")
         return text
         
     except Exception as e:
         print(f"Gemini API Error: {e}")
-        with open("category.txt", "w", encoding="utf-8") as f:
-            f.write("MARVEL")
         return (
             "Kya aapko pata hai ki Marvel comics mein Iron Man ka armor itna powerful hai "
             "ki wo Celestial powers ko bhi absorb kar sakta hai? Lekin MCU movies mein is detail ko "
@@ -73,13 +67,13 @@ def generate_audio(text):
     if not api_keys:
         raise ValueError("No ElevenLabs API keys found!")
 
-    # Bunty Voice / Energetic Hindi Voice ID
-    voice_id = "pNInz6obpgDQGcFmaJgB"  # Primary Energetic Male Voice
+    # Bunty Voice / Hyper-energetic Indian Accent Male Voice ID
+    voice_id = "nPczCjzI2devNBz1zbdH" 
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
     success = False
     for idx, key in enumerate(api_keys):
-        print(f"Generating Bunty Voice with Key #{idx + 1}...")
+        print(f"Generating Real Bunty Voice with Key #{idx + 1}...")
         headers = {
             "Accept": "audio/mpeg",
             "Content-Type": "application/json",
@@ -89,9 +83,9 @@ def generate_audio(text):
             "text": text,
             "model_id": "eleven_multilingual_v2",
             "voice_settings": {
-                "stability": 0.30,        # Energetic Bunty Voice Pitch
+                "stability": 0.15,          # Expressive fast Bunty style tone
                 "similarity_boost": 0.85,
-                "style": 0.45,
+                "style": 0.65,
                 "use_speaker_boost": True
             }
         }
@@ -100,12 +94,21 @@ def generate_audio(text):
         if res.status_code == 200:
             with open("voice.mp3", "wb") as f:
                 f.write(res.content)
-            print("voice.mp3 generated successfully!")
+            print("voice.mp3 (Bunty Voice) generated successfully!")
             success = True
             break
 
     if not success:
-        raise Exception("All ElevenLabs API keys failed!")
+        # Fallback to high-energy voice if custom ID fails
+        fallback_voice_id = "pNInz6obpgDQGcFmaJgB"
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{fallback_voice_id}"
+        headers = {"Accept": "audio/mpeg", "Content-Type": "application/json", "xi-api-key": api_keys[0]}
+        data["voice_settings"]["stability"] = 0.20
+        res = requests.post(url, json=data, headers=headers)
+        if res.status_code == 200:
+            with open("voice.mp3", "wb") as f:
+                f.write(res.content)
+            print("voice.mp3 generated using Fallback Voice!")
 
 if __name__ == "__main__":
     text = get_script()
