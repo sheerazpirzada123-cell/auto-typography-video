@@ -8,10 +8,18 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_script():
     try:
-        categories = ["Technology", "Space & Science", "Human Psychology", "World History", "Bizarre Facts", "Life Hacks"]
+        # Har run par random category choose hogi
+        categories = [
+            "Technology", 
+            "Space & Science", 
+            "Human Psychology", 
+            "World History", 
+            "Bizarre Facts", 
+            "Life Hacks"
+        ]
         selected_category = random.choice(categories)
         
-        # Fixed valid model name
+        # Valid Gemini model
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = (
@@ -19,6 +27,7 @@ def get_script():
             "STRICT LIMIT: Maximum 200 characters long. Punchy typography style script."
         )
         
+        # High temperature for unique outputs on every run
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(
@@ -46,7 +55,8 @@ def generate_audio(text):
     if not api_key:
         raise ValueError("ELEVENLABS_API_KEY secret is missing in repository settings!")
 
-    voice_id = "21m00Tcm4TlvDq8ikWAM"
+    # Free Tier supported default Voice ID (George)
+    voice_id = "JBFqnCBsd6RMkjVDRZzb"
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     
     headers = {
@@ -55,7 +65,7 @@ def generate_audio(text):
         "xi-api-key": api_key
     }
     
-    # Updated to ElevenLabs active non-deprecated model
+    # Updated active ElevenLabs model
     data = {
         "text": text,
         "model_id": "eleven_flash_v2_5",
