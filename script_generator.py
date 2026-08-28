@@ -73,12 +73,13 @@ def generate_audio(text):
     if not api_keys:
         raise ValueError("No ElevenLabs API keys found!")
 
-    voice_id = "21m00Tcm4TlvDq8ikWAM" # High-energy engaging voice (Rachel)
+    # Bunty Voice / Energetic Hindi Voice ID
+    voice_id = "pNInz6obpgDQGcFmaJgB"  # Primary Energetic Male Voice
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
     success = False
     for idx, key in enumerate(api_keys):
-        print(f"Generating Natural Human Voice with Key #{idx + 1}...")
+        print(f"Generating Bunty Voice with Key #{idx + 1}...")
         headers = {
             "Accept": "audio/mpeg",
             "Content-Type": "application/json",
@@ -88,9 +89,9 @@ def generate_audio(text):
             "text": text,
             "model_id": "eleven_multilingual_v2",
             "voice_settings": {
-                "stability": 0.40,
-                "similarity_boost": 0.80,
-                "style": 0.25,
+                "stability": 0.30,        # Energetic Bunty Voice Pitch
+                "similarity_boost": 0.85,
+                "style": 0.45,
                 "use_speaker_boost": True
             }
         }
