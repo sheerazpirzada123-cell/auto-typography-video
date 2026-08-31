@@ -1,5 +1,6 @@
 import os
 import random
+import time
 import requests
 import google.generativeai as genai
 
@@ -7,42 +8,62 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_script():
     try:
-        categories = ["MARVEL", "ANIME", "DC_COMICS", "POP_CULTURE", "SCI_FI_FACTS"]
-        chosen_category = random.choice(categories)
+        # Endless Niche & Sub-Genre Generators
+        universes = [
+            "Marvel Comics", "MCU", "DC Comics", "Dragon Ball Z", "Naruto", 
+            "One Piece", "Attack on Titan", "Demon Slayer", "Jujutsu Kaisen",
+            "Sci-Fi Movies", "Hollywood Movie Easter Eggs", "Popular Video Games Facts"
+        ]
+        
+        angles = [
+            "the most disturbing secret theory",
+            "an overpowered hidden ability nobody talks about",
+            "a mind-blowing plot hole that changes everything",
+            "a deleted scene concept that fans missed",
+            "the darkest backstory detail",
+            "an insane power comparison fact"
+        ]
+
+        # Random Seed & Timestamp to ensure 100% uniqueness on every workflow run
+        random_seed = int(time.time() * 1000)
+        chosen_universe = random.choice(universes)
+        chosen_angle = random.choice(angles)
 
         model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # Human-like speech prompt
         prompt = (
-            f"Write an extremely natural, highly energetic short video script about a mind-blowing secret or fact in {chosen_category}.\n\n"
-            "CRITICAL STYLE RULES:\n"
-            "1. LANGUAGE: Strict Roman Hinglish (English A-Z alphabets ONLY).\n"
-            "2. HUMAN ACCENT & FLOW: Write EXACTLY how a regular Indian guy/influencer speaks out loud to a friend. Use natural conversational words like 'arrey', 'bhai', 'yaar', 'sach mein', 'matlab'.\n"
-            "3. NO ROBOTIC WORDS: Avoid formal bookish Hindi translated into English. Make it sound like casual daily conversation.\n"
-            "4. LENGTH: 30 to 40 words total (around 18 seconds spoken).\n"
-            "5. NO SPECIAL SYMBOLS: Strictly no Urdu, Devanagari, or Arabic letters. Plain A-Z only.\n"
-            "6. STRUCTURE: Dynamic hook in the beginning, crazy fact in the middle, fast call-to-action at the end."
+            f"Random Seed: {random_seed}\n"
+            f"Topic Target: Pick a COMPLETELY UNKNOWN or HIGHLY INTERESTING topic about {chosen_universe}.\n"
+            f"Angle: Focus on {chosen_angle}.\n\n"
+            "STRICT RULES FOR GENERATION:\n"
+            "1. NO REPETITION: Do NOT write about Iron Man's Celestial armor, Thor's hammer weight, Goku's stamina, or Batman's Superman plan. Choose something 100% FRESH.\n"
+            "2. LANGUAGE: Write strictly in natural, daily-spoken Roman Hinglish (English A-Z alphabets ONLY).\n"
+            "3. HUMAN VOICE & ACCENT: Speak like a real Indian guy/influencer chatting with a friend. Use words like 'arrey', 'bhai', 'yaar', 'sach mein', 'matlab'.\n"
+            "4. LENGTH: Strictly 30 to 35 words (approx. 15-18 seconds spoken).\n"
+            "5. NO SPECIAL CHARACTERS: Strictly standard A-Z alphabets. No Hindi/Urdu/Arabic script.\n"
+            "6. HOOK & CTA: Start with a heavy hook line and end with 'Abhi follow karo!' or 'Follow kar lo!'"
         )
         
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(
-                temperature=0.98,
+                temperature=1.0,  # Maximum randomness for infinite new ideas
                 top_p=0.95
             )
         )
         text = response.text.strip()
-        print(f"Generated Script ({chosen_category}):\n{text}")
+        print(f"New Infinite Topic Generated ({chosen_universe}):\n{text}")
         return text
         
     except Exception as e:
         print(f"Gemini API Error: {e}")
-        fallback_scripts = [
-            "Arrey bhai kya aapko pata hai ki Thor ka hammer Mjolnir kitna heavy hai? Matlab isko sirf wahi utha sakta hai jo truly worthy ho! Aise insane facts ke liye abhi follow karo!",
-            "Goku ki strength ka real secret pata hai? DBZ mein uski infinite transformation energy dekh kar sab shock ho gaye the! Channel ko abhi follow karo!",
-            "Arrey yaar Batman ke paas Superman ko harane ka secret plan hamesha ready rehta hai! DC ka yeh fact sach mein mind blowing hai! Abhi follow kar lo!"
+        # Dynamic fallback pool with timestamp randomness
+        fallback_pool = [
+            "Arrey bhai kya aapko pata hai ki Spider-Man ka Iron Spider suit kitna deadly hai? Isme aise weapons hain jo kisi ko bhi hila de! Aise facts ke liye follow karo!",
+            "Bhai Vegeta ki real backstory pata hai? Dragon Ball mein uski training routine dekh kar Goku bhi shock ho gaya tha! Channel ko abhi follow karo!",
+            "Arrey yaar Death Note ka ek aisa rule hai jo 99 percent logo ne notice nahi kiya! Yeh fact sach mein mind blowing hai, abhi follow kar lo!"
         ]
-        return random.choice(fallback_scripts)
+        return random.choice(fallback_pool)
 
 def generate_audio(text):
     api_keys = [
@@ -56,7 +77,6 @@ def generate_audio(text):
     if not api_keys:
         raise ValueError("No ElevenLabs API keys found in secrets!")
 
-    # Bunty Voice Profile ID
     voice_id = "nPczCjzI2devNBz1zbdH" 
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
@@ -72,9 +92,9 @@ def generate_audio(text):
             "text": text,
             "model_id": "eleven_multilingual_v2",
             "voice_settings": {
-                "stability": 0.25,        # Adjusted for human-like voice modulation
+                "stability": 0.25,
                 "similarity_boost": 0.85,
-                "style": 0.55,             # Added expressiveness
+                "style": 0.55,
                 "use_speaker_boost": True
             }
         }
