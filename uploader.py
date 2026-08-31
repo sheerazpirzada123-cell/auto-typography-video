@@ -8,8 +8,9 @@ def upload_to_youtube():
     client_secret = os.environ.get("YOUTUBE_CLIENT_SECRET")
     refresh_token = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 
-    if not all([client_id, client_secret, refresh_token]):
-        raise ValueError("Missing YouTube API credentials in environment variables!")
+    if not client_id or not client_secret or not refresh_token:
+        print("ERROR: Missing YouTube Secrets! Check YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, and YOUTUBE_REFRESH_TOKEN in Repository Secrets.")
+        raise ValueError("YouTube API credentials incomplete.")
 
     credentials = google.oauth2.credentials.Credentials(
         None,
@@ -50,7 +51,11 @@ def upload_to_youtube():
         }
     }
 
-    media = googleapiclient.http.MediaFileUpload("final_output.mp4", chunksize=-1, resumable=True)
+    video_file = "final_output.mp4"
+    if not os.path.exists(video_file):
+        raise FileNotFoundError(f"Video file '{video_file}' not found. Make sure video_builder.py runs successfully.")
+
+    media = googleapiclient.http.MediaFileUpload(video_file, chunksize=-1, resumable=True)
     
     print("Uploading video to YouTube Shorts...")
     request = youtube.videos().insert(
@@ -60,7 +65,7 @@ def upload_to_youtube():
     )
     
     response = request.execute()
-    print(f"Video uploaded successfully! Video ID: {response.get('id')}")
+    print(f"SUCCESS: Video uploaded successfully! Video ID: {response.get('id')}")
 
 if __name__ == "__main__":
     upload_to_youtube()
