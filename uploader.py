@@ -26,13 +26,22 @@ def upload_to_youtube():
         with open("script.txt", "r", encoding="utf-8") as f:
             lines = f.readlines()
             if lines:
-                video_title = lines[0][:60] + " #shorts #facts"
+                video_title = lines[0].strip()[:60] + " #shorts #facts"
 
     request_body = {
         "snippet": {
             "title": video_title,
-            "description": "Mind blowing viral facts explained! Subscribe for more daily videos! #shorts #viral #facts",
-            "tags": ["shorts", "facts", "marvel", "anime", "viral"],
+            "description": "Mind blowing viral facts explained! Subscribe for more daily videos!\n\n#shorts #viral #trending #facts #mindblowingfacts #interestingfacts #didyouknow #shortsfeed",
+            "tags": [
+                "shorts", 
+                "viral", 
+                "trending", 
+                "facts", 
+                "mind blowing facts", 
+                "interesting facts", 
+                "did you know", 
+                "shorts feed"
+            ],
             "categoryId": "24"
         },
         "status": {
