@@ -9,16 +9,20 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 def generate_script():
-    # Prompting for actual factual content
+    # Prompting for human-like conversational Hinglish script with natural pauses and full facts
     prompt = """
-    Write a short, engaging YouTube Shorts script (maximum 40-50 words) in Hinglish (Hindi written in English alphabets).
+    Write a short, viral YouTube Shorts script (around 40-50 words) in Indian Hinglish (Hindi written in Roman script).
     
-    STRICT REQUIREMENTS:
-    1. Pick ONE specific, interesting, real mind-blowing fact (e.g. space, science, animals, or anime facts).
-    2. Start with a catchy 1-line hook.
-    3. IMMEDIATELY explain the actual fact clearly in 2-3 sentences. Do not leave the fact blank or incomplete!
-    4. End with a 1-line call to action (like "Follow for more!").
-    5. Do NOT include scene directions, speaker names, bracketed notes, or timestamps. Output ONLY the spoken text.
+    TONE & STYLE (HUMAN BUNTY ACCENT):
+    - Speak like a young, energetic Indian guy (Bunty style) talking directly to a friend.
+    - Use natural human expressions like 'hmm...', 'Waise...', 'Arrey listen...', 'Pata hai?', 'Acha ek baat batao...'.
+    - Use natural punctuation (commas, ellipsis '...') so the text-to-speech voice takes realistic human pauses.
+
+    CONTENT REQUIREMENTS:
+    1. Start with a quick, punchy hook using Bunty-style slang.
+    2. Tell ONE complete, genuine mind-blowing fact clearly. Do NOT leave the fact out!
+    3. End with a smooth call-to-action (e.g., "Abhi subscribe karo, milte hain next video mein!").
+    4. NO brackets, NO scene instructions, NO speaker names. Output ONLY the raw spoken lines.
     """
 
     model = genai.GenerativeModel("gemini-1.5-flash")
@@ -26,13 +30,13 @@ def generate_script():
     
     script_text = response.text.strip()
     
-    # Save script to text file for moviepy and voiceover generators
+    # Save script to text file
     with open("script.txt", "w", encoding="utf-8") as f:
         f.write(script_text)
         
-    print("--- New Script Generated ---")
+    print("--- New Bunty-Style Script Generated ---")
     print(script_text)
-    print("----------------------------")
+    print("---------------------------------------")
 
 if __name__ == "__main__":
     generate_script()
