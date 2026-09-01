@@ -25,7 +25,8 @@ def generate_script():
     4. NO brackets, NO scene instructions, NO speaker names. Output ONLY the raw spoken lines.
     """
 
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    # Updated Model Name to latest supported version
+    model = genai.GenerativeModel("gemini-2.0-flash")
     response = model.generate_content(prompt)
     
     script_text = response.text.strip()
