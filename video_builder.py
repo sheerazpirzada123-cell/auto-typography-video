@@ -1,6 +1,10 @@
 import os
 import requests
-import subprocess
+from moviepy.editor import (
+    ColorClip, TextClip, AudioFileClip, 
+    CompositeVideoClip, CompositeAudioClip
+)
+from moviepy.audio.fx.all import volumex
 
 def generate_voiceover():
     api_keys = [
@@ -14,9 +18,9 @@ def generate_voiceover():
         raise FileNotFoundError("script.txt missing!")
 
     with open("script.txt", "r", encoding="utf-8") as f:
-        script_text = f.read()
+        script_text = f.read().strip()
 
-    # Energetic Male Voice ID
+    # Bunty Style Natural Male Voice
     VOICE_ID = "pNInz6obpgDQGcFmaJgB"
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
 
@@ -24,9 +28,9 @@ def generate_voiceover():
         "text": script_text,
         "model_id": "eleven_multilingual_v2",
         "voice_settings": {
-            "stability": 0.35,        # Low stability = Energetic & Pitch-varied human expression
-            "similarity_boost": 0.80,
-            "style": 0.50,            # High expressiveness
+            "stability": 0.40,
+            "similarity_boost": 0.75,
+            "style": 0.45,
             "use_speaker_boost": True
         }
     }
@@ -45,18 +49,60 @@ def generate_voiceover():
     if not success:
         raise RuntimeError("ElevenLabs keys failed!")
 
-def build_video_with_typography():
-    # Audio duration ke according background generate aur typography render karna
-    # Multiline wrap + Yellow-White Typography style overlay
-    cmd = (
-        'ffmpeg -y -f lavfi -i color=c=black:s=1080x1920 '
-        '-i audio.mp3 '
-        '-vf "drawtext=textfile=script.txt:fontcolor=white:fontsize=42:x=(w-text_w)/2:y=(h-text_h)/2:line_spacing=20:box=1:boxcolor=black@0.6:boxborderw=15" '
-        '-c:v libx264 -preset ultrafast -c:a aac -shortest final_output.mp4'
+def build_custom_typography_video():
+    with open("script.txt", "r", encoding="utf-8") as f:
+        full_text = f.read().strip()
+
+    voice_audio = AudioFileClip("audio.mp3")
+    duration = voice_audio.duration
+
+    # Dark background canvas (1080x1920 Vertial Shorts Format)
+    bg_clip = ColorClip(size=(1080, 1920), color=(15, 15, 15)).set_duration(duration)
+
+    # Split text into chunks for dynamic word-by-word typography
+    words = full_text.split()
+    chunk_size = 4
+    text_chunks = [" ".join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
+    
+    chunk_duration = duration / max(len(text_chunks), 1)
+    text_clips = []
+
+    for idx, chunk in enumerate(text_chunks):
+        start_t = idx * chunk_duration
+        
+        # Yellow and White Animated Typography Box
+        txt = TextClip(
+            chunk.upper(),
+            fontsize=65,
+            color='yellow',
+            font='Arial-Bold',
+            stroke_color='black',
+            stroke_width=3,
+            method='caption',
+            size=(900, None)
+        ).set_start(start_t).set_duration(chunk_duration).set_position(('center', 'center'))
+
+        text_clips.append(txt)
+
+    # Audio Mix with Background Music
+    audio_tracks = [voice_audio]
+    if os.path.exists("bg_music.mp3"):
+        bg_music = AudioFileClip("bg_music.mp3").fx(volumex, 0.15).set_duration(duration)
+        audio_tracks.append(bg_music)
+
+    final_audio = CompositeAudioClip(audio_tracks)
+    final_video = CompositeVideoClip([bg_clip] + text_clips).set_audio(final_audio)
+
+    # Render Output
+    final_video.write_videofile(
+        "final_output.mp4",
+        fps=30,
+        codec="libx264",
+        audio_codec="aac",
+        preset="ultrafast"
     )
-    subprocess.run(cmd, shell=True, check=True)
-    print("Video Render Complete: final_output.mp4 generated.")
+    print("Video Render Complete with MoviePy Typography & BG Music!")
 
 if __name__ == "__main__":
     generate_voiceover()
-    build_video_with_typography()
+    build_custom_typography_video()
