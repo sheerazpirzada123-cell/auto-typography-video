@@ -2,8 +2,8 @@ name: Auto Create and Upload YouTube Shorts
 
 on:
   schedule:
-    # Daily Peak Times (PKT/IST): Dopahar 1:00 PM, Shaam 7:00 PM, Raat 9:00 PM
-    - cron: '0 8,14,16 * * *'
+    # 2 videos/day at Pakistan peak times (PKT = UTC+5): Dopahar 1:00 PM & Raat 9:00 PM PKT
+    - cron: '0 8,16 * * *'
   workflow_dispatch: # Manual Run button
 
 jobs:
@@ -38,6 +38,7 @@ jobs:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           ELEVENLABS_API_KEY_2: ${{ secrets.ELEVENLABS_API_KEY_2 }}
           ELEVENLABS_API_KEY_3: ${{ secrets.ELEVENLABS_API_KEY_3 }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: |
           python script_generator.py
